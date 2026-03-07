@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<Orangeri>
+  <StatusValues Opdateret="xxx">
+    <LastWatering1>0.000000</LastWatering1>
+    <LastWatering2>0.000000</LastWatering2>
+    <LastWatering3>0.000000</LastWatering3>
+    <LastWatering4>0.000000</LastWatering4>
+    <WindowsPct>0.000000</WindowsPct>
+  </StatusValues>
+  <StatisticsValues Opdateret="xxx">
+    <RainDayAccum>0.000000</RainDayAccum>
+    <RainHourAccum>0</RainHourAccum>
+    <WaterUseCount>0</WaterUseCount>
+    <WaterUseAccum>0</WaterUseAccum>
+  </StatisticsValues>
+  <RessourceUse Opdateret="xxx">
+    <TimeWaterValve1>0.000000</TimeWaterValve1>
+    <TimeWaterValve2>0.000000</TimeWaterValve2>
+    <TimeWaterValve3>0.000000</TimeWaterValve3>
+    <TimeWaterValve4>0.000000</TimeWaterValve4>
+    <FreshWaterToTank>0.000000</FreshWaterToTank>
+    <TimeHeatOn>425210.000000</TimeHeatOn>
+    <LightGreenhouse>0.000000</LightGreenhouse>
+    <EnergyUse>xxx</EnergyUse>
+  </RessourceUse>
+</Orangeri>

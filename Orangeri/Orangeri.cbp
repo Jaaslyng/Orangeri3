@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Orangeri" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Orangeri" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-std=c++17" />
+					<Add option="-g" />
+					<Add option="-pthread" />
+					<Add directory="/home/jesper/Documents/pugixml-1.9/src" />
+					<Add directory="/home/jesper/Documents/Adafruit-sht31-for-PI-master" />
+					<Add directory="/home/jesper/Documents/ABElectronics_CPP_Libraries/ExpanderPi" />
+					<Add directory="/home/jesper/Documents/Adafruit_Python_DHT/source/Raspberry_Pi_2" />
+					<Add directory="/home/jesper/Documents/DS18B20-master" />
+					<Add directory="/home/jesper/Documents/BME680_driver-master" />
+					<Add directory="/usr/include" />
+					<Add directory="/home/jesper/Crow/scripts" />
+					<Add directory="/usr/include/boost/thread" />
+					<Add directory="/home/jesper/Documents/Orangeri3/Orangeri/" />
+				</Compiler>
+				<Linker>
+					<Add option="-pthread" />
+					<Add library="/usr/local/lib/mariadb/libmariadb.so" />
+					<Add library="/usr/lib/arm-linux-gnueabihf/libspdlog.so" />
+					<Add library="/usr/lib/arm-linux-gnueabihf/libfmt.so" />
+					<Add library="/lib/libpigpiod_if2.so" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Orangeri" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add directory="/home/orangeri/Documents/blynk-library-master/src" />
+			<Add directory="/home/orangeri/Documents/blynk-library-master/linux" />
+		</Compiler>
+		<Unit filename="../../../ABElectronics_CPP_Libraries/ExpanderPi/ABE_ExpanderPi.cpp" />
+		<Unit filename="../../../Adafruit-sht31-for-PI-master/sht31-d.cpp" />
+		<Unit filename="../../../Adafruit_Python_DHT/source/common_dht_read.cpp" />
+		<Unit filename="../../../DS18B20-master/DS18B20.cpp" />
+		<Unit filename="../../../pugixml-1.9/src/pugixml.cpp" />
+		<Unit filename="../Database.cpp" />
+		<Unit filename="../Database.h" />
+		<Unit filename="../main.cpp" />
+		<Unit filename="../myXML.cpp" />
+		<Unit filename="../myXML.h" />
+		<Extensions />
+	</Project>
+</CodeBlocks_project_file>
