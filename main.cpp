@@ -1,7 +1,7 @@
 /*Noter om udvikling
 
 Styring af lys er ikke i9mplementeret med start og slut tider
-
+OPdateret
 */
 
 //#define DebugWater   //Debug af vandning og friskvand
