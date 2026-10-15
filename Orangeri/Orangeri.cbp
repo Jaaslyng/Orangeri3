@@ -58,6 +58,8 @@
 		<Unit filename="../../../Adafruit_Python_DHT/source/common_dht_read.cpp" />
 		<Unit filename="../../../DS18B20-master/DS18B20.cpp" />
 		<Unit filename="../../../pugixml-1.9/src/pugixml.cpp" />
+		<Unit filename="../ButtonDriver.cpp" />
+		<Unit filename="../ButtonDriver.h" />
 		<Unit filename="../Database.cpp" />
 		<Unit filename="../Database.h" />
 		<Unit filename="../main.cpp" />

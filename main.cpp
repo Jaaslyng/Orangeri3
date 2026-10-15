@@ -14,31 +14,18 @@ OPdateret
 #include <mariadb/conncpp.hpp>
 #include <atomic>
 #include <spdlog/spdlog.h>
-#include "spdlog/sinks/basic_file_sink.h"  // For logging to a file
-#include "spdlog/sinks/rotating_file_sink.h" // support for rotating file logging
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/async.h>
+#include <spdlog/async_logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <ButtonDriver.h>
 #include <fmt/chrono.h>
-
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-//#include <pigpio.h>   //Pulse counting
 #include <pigpiod_if2.h>
-
-
 #include <csignal>     //Handling Terminal Closure
-
-//auto logger = spdlog::logger("Orangei_logger", spdlog::sinks::file_sink("OrangeriLog.txt", 1));
-bool AfterOrangeriSetup = false; //Sættes til Ture når setup er gennemført
-bool FirstBlynkUpdate = true;  //Sættes til FALSE efter første update. Bruges til at nulstille tabel m.m.
-
-
-
-Database db;
-
-using namespace std;
-
 #include <iostream>
-//#include <Orangeri_lib.h>
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,42 +37,82 @@ using namespace std;
 #include <sys/stat.h>
 #include <sys/types.h>
 
+bool AfterOrangeriSetup = false; //Sættes til Ture når setup er gennemført
+bool FirstBlynkUpdate = true;  //Sættes til FALSE efter første update. Bruges til at nulstille tabel m.m.
 
+Database db;
+
+using namespace std;
 
 
 static std::shared_ptr<spdlog::logger> logger;
+
+// Kald én gang tidligt i programmet
 void setupLogger()
 {
-// Create a logger with the name "example_logger"
     try
     {
-        // create a file rotating logger with 5mb size max and 3 rotated files
-        logger = spdlog::rotating_logger_mt("file_logger", "/home/jesper/Documents/Orangeri3/Orangeri/log/OrangeriLogs.txt", 1024 * 1024 * 2, 3);
-        // Set the log format: "[timestamp] [log level] message"
-        logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
+        // Error handler for at fange spdlog-fejl (IO, flush osv.)
+        spdlog::set_error_handler([](const std::string &msg)
+        {
+            std::cerr << "spdlog error: " << msg << std::endl;
+        });
 
-        // Set automatic flushing for INFO and above
-        //logger->flush_on(spdlog::level::info);  //kan belaste systemet for voldsomt
+        // Init thread pool til async logging (queue size, nr threads)
+        // Vælg queue size efter forventet log-load (f.eks. 8192) og 1 baggrundstråd
+        spdlog::init_thread_pool(8192, 1);
 
-        // Brug kun periodic flush
-        spdlog::flush_every(std::chrono::seconds(10));
+        // Rotating sink: 2 MB max, 3 filer
+        const std::string log_path = "/home/jesper/Documents/Orangeri3/Orangeri/log/OrangeriLogs.txt";
+        auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_path, 2 * 1024 * 1024, 3);
 
-        // Set this logger as the default logger (optional, but useful)
+        // (Valgfrit) også log til console
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        console_sink->set_level(spdlog::level::info);
+
+        std::vector<spdlog::sink_ptr> sinks{rotating_sink, console_sink};
+
+        // Opret async logger. Brug block eller discard politik
+        logger = std::make_shared<spdlog::async_logger>(
+                     "file_logger",
+                     sinks.begin(), sinks.end(),
+                     spdlog::thread_pool(),
+                     spdlog::async_overflow_policy::block
+                 );
+
+        spdlog::register_logger(logger);
         spdlog::set_default_logger(logger);
 
-        spdlog::set_level(spdlog::level::info);   //- info, warn, error, critical bliver logget
-        //- debug og trace bliver ignoreret
-        //spdlog::set_level(spdlog::level::debug);//- info, warn, error, critical, debug bliver logget
-        //spdlog::set_level(spdlog::level::trace;//- info, warn, error, critical, debug, trace bliver logget
+        // Format og niveau
+        logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
+        spdlog::set_level(spdlog::level::info);
+    //spdlog::set_level(spdlog::level::debug);
 
+        // Periodisk flush (starter intern flush-tråd). Kan fjernes hvis ikke ønsket.
+        spdlog::flush_every(std::chrono::seconds(10));
+
+        // (Valgfrit) flush ved errors
+        logger->flush_on(spdlog::level::err);
+
+        logger->info("Logger initialiseret (async rotating).");
     }
     catch (const spdlog::spdlog_ex &ex)
     {
-        // 5️⃣ Handle errors if logging fails
         std::cerr << "Log initialization failed: " << ex.what() << std::endl;
     }
-
 }
+
+// Kald ved afslutning (eller før fork hvis du gen-initialiserer efter fork)
+void teardownLogger()
+{
+    if (logger)
+    {
+        logger->info("Logger shutting down.");
+    }
+    spdlog::shutdown(); // venter på baggrundstråde og frigiver ressourcer
+    logger.reset();
+}
+
 
 
 
@@ -149,7 +176,7 @@ int LastHourChanged = 0;    //Som ovenfor, men for time værdi.
 bool DateInitialized = false; //bruges til at initialiserer diverse variable ved start af ny dag, nulstilling af tællere etc
 
 // Debounce tracking for each button
-volatile uint32_t lastInterruptTime[3] = {0};
+volatile uint32_t lastInterruptTime[3] = {0,0,0};
 const uint32_t debounceTime = 200000; // 200ms debounce
 
 time_t StopVentButtonAtTime = 0;  //Tid hvor StopVent afbrydes
@@ -161,59 +188,27 @@ int waterPumpButton_Minutes = 30;
 
 //String der løbende benyttes til fejlbeskeder der skal smales til tekst
 char ErrStr[200];
-//int myBlynkDelay = 0; //Delay der skal sikre at Blynk data ikke overføres for hutigt til server
 
 int TimeForWindowToOpen = 50; //sekunder til at åbne vinduerne helt
 int MinSecBetweenMotorMoving = 300; //mindste tid i sekunder mellem at motorerne bevæger sig
 int WindowTimerStepInPct = 10; //jeaa ændret beregner hvormange sekunder der rykkes og hvad det svarer til i % åbning/lukning
 int WindowOpening_P_Value = 16; //Faktor der ganges med temperatur-fejlen og medfører en ændring i vinduernes åbning på det antal procent
 
-//int Status_HeatUp = 0;
+int Status_HeatOn = 0;  //Status for om der varmes op med varmeblæser
 int Status_LightGreenhouse = 0;
 int Status_FreshWaterToTankValve = 0;
-//int Status_FreshWaterToTankValve_last = 0;
-
-int Status_WaterValve1 = 0;
-int Status_WaterValve2 = 0;
-int Status_WaterValve3 = 0;
-int Status_WaterValve4 = 0;
-
-//Beregning af tid vandingsventiler er åbne
-int WaterValve1On = 0;  //Status på om der vandes eller ikke vandes
-time_t Stat_TimeWaterValve1;   //Samler sum over vandingstig. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
-time_t WaterValve1TimeOn; //holder tid hvor en vanding startes, så der kan beregnes vandingstid
-
-int WaterValve2On = 0;  //Status på om der vandes eller ikke vandes
-time_t Stat_TimeWaterValve2;   //Samler sum over vandingstig. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
-time_t WaterValve2TimeOn; //holder tid hvor en vanding startes, så der kan beregnes vandingstid
-
-int WaterValve3On = 0;  //Status på om der vandes eller ikke vandes
-time_t Stat_TimeWaterValve3;   //Samler sum over vandingstig. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
-time_t WaterValve3TimeOn; //holder tid hvor en vanding startes, så der kan beregnes vandingstid
-
-int WaterValve4On = 0;  //Status på om der vandes eller ikke vandes
-time_t Stat_TimeWaterValve4;   //Samler sum over vandingstig. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
-time_t WaterValve4TimeOn; //holder tid hvor en vanding startes, så der kan beregnes vandingstid
-
 
 int FreshWaterToTankOn = 0;  //Status på om der vandes eller ikke vandes
 time_t Stat_TimeFreshWaterToTank;   //Samler sum over vandingstig. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
 time_t FreshWaterToTankTimeOn; //holder tid hvor en vanding startes, så der kan beregnes vandingstid
 
-int HeatOn = 0;  //Status på om der opvarmes eller ikke
+//int Status_HeatOn = 0;  //Status på om der opvarmes eller ikke
 time_t Stat_TimeHeat;   //Samler sum over opvarmning. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
 time_t HeatTimeOn; //holder tid hvor en opvarmning startes, så der kan beregnes tid
 
 int LightOn = 0;        //Status på om der vandes eller ikke vandes
 time_t Stat_TimeLight;  //Samler sum over vandingstig. Sum gemmes i xml fil og kører indtild er manuelt nulstilles
 time_t LightTimeOn;     //holder tid hvor en vanding startes, så der kan beregnes vandingstid
-
-//int Status_AddWaterValve =  nu ;
-//int Status_AddFreshWaterValve = 0; //Holder status på tilstand af ventil, der åbner for vandhanevand til palletank.
-int Status_WaterManual1 = 0;   //sættes til 1 når vanding kører manuel ellers 1
-int Status_WaterManual2 = 0;   //sættes til 1 når vanding kører manuel ellers 1
-int Status_WaterManual3 = 0;   //sættes til 1 når vanding kører manuel ellers 1
-int Status_WaterManual4 = 0;   //sættes til 1 når vanding kører manuel ellers 1
 
 int LedPinOn = 0;
 
@@ -274,18 +269,13 @@ GPIO 4
 //Tekster der benyttes i setpoint tabel defineres her
 
 //Setpoints
-string WateringControl_SetpointText = "VandingsKontrol";
+string WaterMenuSelection_SetpointText = "VandingsKontrol";
 string WindowControl_SetpointText = "VinduesKontrol";
 //CurrentValues
 
 string LastWateringTime1_Parameter = "SidsteVandingsTime1Label";
 string LastWateringTime2_Parameter = "SidsteVandingsTime2Label";
 
-
-string LastWatering1_Parameter = "SidsteVandingLabel1";
-string LastWatering2_Parameter = "SidsteVandingLabel2";
-string LastWatering3_Parameter = "SidsteVandingLabel3";
-string LastWatering4_Parameter = "SidsteVandingLabel4";
 string WindowsPct_Parameter = "WindowsPct";
 string WaterFlow1_Total_Parameter = "WaterFlow1_Total";
 string WaterFlow1_Parameter = "WaterFlow1";
@@ -315,26 +305,23 @@ string WaterFlow2Day_Text = "WaterFlow2Daily";
 string WaterFlow3Day_Text = "WaterFlow3Daily";
 
 
-string HeatTimeOn_Text = "HeatOnTime";
+string HeatTimeOn_Text = "Status_HeatOnTime";
 string FreshWaterToTankTime_Text = "FreshWaterTime";
 string WaterValve1Time_Text = "WaterValve1Time";
 string WaterValve2Time_Text = "WaterValve2Time";
 string WaterValve3Time_Text = "WaterValve3Time";
 string WaterValve4Time_Text = "WaterValve4Time";
 
-
-//digitale input
-
-
-//digitale output
-//#define LED_WaterPumpButton_Pin 13
-//#define LED_StopVentsButton_Pin 19
-//#define LED_DispButton_Pin 26
-
 // GPIO Pins
+//ButtonDriver io(pi);
+ButtonDriver io(0);
 const int GPIO_Button_WaterPump = 12, GPIO_LED_WaterPump = 15;
 const int GPIO_Button_StopVent = 20, GPIO_LED_StopVent = 23;
 const int GPIO_Button_Disp = 21, GPIO_LED_Disp = 18;
+const int Rain_Gauge_Pin = 17;
+const int WaterFlow1_PIN = 26;
+const int WaterFlow2_PIN = 19;
+const int WaterFlow3_PIN = 16;
 
 // Global state
 std::atomic<bool> procedureWaterPump_Active(false);
@@ -343,16 +330,11 @@ std::atomic<bool> procedureDisp_Active(false);
 std::atomic<bool> running(true);
 
 
-#define RAIN_GAUGE_PIN 17
+
 #define Water_Flow_Pin 27  //Benyttes denne???????
 #define WaterLevelPin1 24  //Vandniveau måling for fyldt palletank   høj: fyldt lav: ikke fyldt
 #define WaterLevelPin2 11 //Vandniveau måling for tom palletank    høj: tom   lav: ikke tom
-#define WaterFlow1_PIN 26
-#define WaterFlow2_PIN 19
-#define WaterFlow3_PIN 16
-//#define LED_WaterPump_PIN 9
-//#define LED_StopVents_PIN 10
-//#define LED_Disp_PIN 11
+
 
 #define LedPin 22       //LED der viser at det kører
 //Expander Pi porte
@@ -361,14 +343,11 @@ std::atomic<bool> running(true);
 #define Pi_Relay_LightGreenhouse 3
 #define Pi_Relay_FreshWater 4  //Vandhanevand til tank#define Relay_LightPlants 5   //er ikkef orbundet elektrisk
 
-#define Pi_Relay_WaterValve1 5 //COM 7 på relækort
-#define Pi_Relay_WaterValve2 6 //COM 8 på relækort
-#define Pi_Relay_WaterValve3 7 //COM 5 på relækort
-#define Pi_Relay_WaterValve4 8 //COM 8 på relækort
-
-//#define Pi_Relay_LED_WaterPump 9
-//#define Pi_Relay_LED_StopVents 10
-//#define Pi_Relay_LED_Disp 11
+const int Pi_Relay_WaterValve1 = 5; //COM 7 på relækort
+const int Pi_Relay_WaterValve2 = 6; //COM 8 på relækort
+const int Pi_Relay_WaterValve3 = 7; //COM 5 på relækort
+const int Pi_Relay_WaterValve4 = 8; //COM 8 på relækort
+const int Pi_Relay_WaterValve5 = 9; //COM 8 på relækort
 
 #define Pi_Relay_Motor1_dir 12
 #define Pi_Relay_Motor1_pwm 13
@@ -386,17 +365,16 @@ int NightStartHour = 22;
 int ComfortDayStartHour = 16;
 int ComfortDayEndHour = 22;
 int AirPumpTemperature = 18;
-int WateringControl = 1;           //Hoælder værdi der læses løbende fra Setpoint tabel
-int Last_WateringControl = 1;      //Gemmer sidste valg indtil nyt tages eller det nulstilles efter udført funktion
+int WaterMenuSelection = 1;           //Hoælder værdi der læses løbende fra Setpoint tabel
+int Last_WaterMenuSelection = 1;      //Gemmer sidste valg indtil nyt tages eller det nulstilles efter udført funktion
 
-int Status_VandingStartTime1 = 9;  //Tid for start af første vanding
-int Status_VandingStartTime2 = 20; //Tid fors tart af anden vanding
+time_t Status_VandingStartTime1 = 0;  //Tid for start af første vanding
+time_t Status_VandingStartTime2 = 0; //Tid fors tart af anden vanding
 int Status_AutomaticControl = 1;
 bool AutoWindow = true;
-int Status_VandingsTidValve1 = 5;
-int Status_VandingsTidValve2 = 5;
-int Status_VandingsTidValve3 = 5;
-int Status_VandingsTidValve4 = 5;
+
+int Status_VandingsTidValve[5] = {5,5,5,5,5};
+
 int VinduesKontrol = 5;
 int VinduesStyring = 1;
 int Aarstid = 1;
@@ -624,19 +602,6 @@ void ExPi_IOPortsSetup(char Bank1, char Bank2)
         IOPortSetupError++;
     }
 
-    /*
-     * catch (const std::out_of_range& oor) {
-         cout << "IOPortSetup - Out of Range error: " << oor.what() << endl;
-       IOPortSetupError++;}
-
-    catch (const std::runtime_error& oor) {
-         cout << "IOPortSetup -  Out of Range error: " << oor.what() << endl;
-       IOPortSetupError++;}
-
-    catch (...){
-       cout << "IOPortSetup - Fejl ved ExPi_IOPortSetup " << endl;
-         IOPortSetupError++;}
-    */
 
 }
 
@@ -680,20 +645,6 @@ void ExPi_IOPortWrite(int PortNbr, int PortState)
         spdlog::error(std::string("IOPortWrite - Unspecific: "));
     }
 
-    /*
-    catch (const std::out_of_range& oor) {
-       cout << "***** IOPortWrite - Out of Range error: " << " Port " << PortNbr << " PortState " << PortState << " " << oor.what() << endl;
-       IOPortWriteError++;}
-
-    catch (const std::runtime_error& oor) {
-       cout << "***** IOPortWrite -  Runtime error: " << "Port " << PortNbr << " PortState " << PortState << " " << oor.what() << endl;
-       IOPortWriteError++;
-        }
-
-    catch (...){
-    cout << "***** IOPortWrite - Fejl ved ExPi_IOPortWrite "  << "Port " << PortNbr << " PortState " << PortState << endl;
-    IOPortWriteError++;}
-    */
 
 }
 
@@ -716,19 +667,6 @@ int ExPi_IOPortRead(int PortNbr)
         IOPortReadError++;
     }
 
-    /*
-     * catch (const std::out_of_range& oor) {
-         cout << "**** IOPortRead - Out of Range error: " << "  PortNbr " << PortNbr << " " << oor.what() << endl;
-       IOPortReadError++;}
-
-    catch (const std::runtime_error& oor) {
-         cout << "'''' IOPortRead -  Runtime error: " << " PortNbr " << PortNbr << " " << oor.what() << endl;
-       IOPortReadError++;}
-
-    catch (...){
-       cout << "**** IOPortRead - Fejl ved ExPi_IOPortRead " << " PortNbr " << PortNbr << " " << endl;
-       IOPortReadError++;}
-    */
 
     return PortResult;
 }
@@ -742,68 +680,21 @@ int ExPi_IOPortRead(int PortNbr)
 
 
 volatile unsigned long lastRainInterruptTime = 0;
-volatile int rainPulseCount = 0; //tæller på flow1
+uint32_t rainPulseCount = 0; //tæller på flow1
 
-//volatile int WaterFlow1EventCounter = 0;
+
 double WaterFlow1;   //Holder flow i en periode
 double WaterTotalFlow1 = 0; //Holder flow siden program start
 
-//volatile int WaterFlow2EventCounter = 0;
 double WaterFlow2;   //Holder flow i en periode
 double WaterTotalFlow2 = 0; //Holder flow siden program start
 
-//volatile int WaterFlow3EventCounter = 0;
 double WaterFlow3;   //Holder flow i en periode
 double WaterTotalFlow3 = 0; //Holder flow siden program start
-
 
 volatile int pulseCountFlow1 = 0;
 volatile int pulseCountFlow2 = 0;
 volatile int pulseCountFlow3 = 0;
-
-
-
-volatile unsigned long pulseCount = 0;
-std::chrono::steady_clock::time_point lastPulseTime;
-const int DEBOUNCE_MS = 100; // Adjust as needed
-
-void countRainPulse(int pi,unsigned gpio, unsigned level, uint32_t tick)
-{
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPulseTime).count();
-
-    if (level == 1 && elapsed > DEBOUNCE_MS)
-    {
-        rainPulseCount++;
-        lastPulseTime = now;
-    }
-
-}
-// Callback function for pulse counting
-void pulseCallbackFlow1(int pi, unsigned gpio, unsigned level, uint32_t tick)
-{
-    if (level == 1)   // Only count rising edges
-    {
-        pulseCountFlow1++;
-    }
-}
-
-// Callback function for pulse counting
-void pulseCallbackFlow2(int pi, unsigned gpio, unsigned level, uint32_t tick)
-{
-    if (level == 1)   // Only count rising edges
-    {
-        pulseCountFlow2++;
-    }
-}
-// Callback function for pulse counting
-void pulseCallbackFlow3(int pi, unsigned gpio, unsigned  level, uint32_t tick)
-{
-    if (level == 1)   // Only count rising edges
-    {
-        pulseCountFlow3++;
-    }
-}
 
 
 void GetWaterFlow1()
@@ -827,7 +718,7 @@ double GetRain()
     //double rain = (pulseCount * RAIN_FACTOR); // Convert to liters
     if (rain > 0)
     {
-        spdlog::info("Rain: {} Pulse: {}", rain, rainPulseCount);
+        spdlog::info("Rain: {} Pulse: {}. Faktor er {}", rain, rainPulseCount, RAIN_FACTOR);
     }
     rainPulseCount = 0; //Nulstller tæller når flow er læst
     return rain; //Beregner nyt total forbrug
@@ -902,6 +793,7 @@ void SetWaterPump(int Status_WaterPump)
             ExPi_IOPortWrite(Pi_Relay_WaterPump, 1);
             db.Update_CurrentValue<string>("WaterPump","On", errmsg);
             spdlog::info("WaterPump On");
+            db.AddEventRecord("Vanding", "Vandpumpe tændes",0,errmsg);
         }
         else
         {
@@ -909,6 +801,7 @@ void SetWaterPump(int Status_WaterPump)
             ExPi_IOPortWrite(Pi_Relay_WaterPump, 0);
             spdlog::info("WaterPump Off");
             db.Update_CurrentValue<string>("WaterPump","Off",errmsg);
+            db.AddEventRecord("Vanding", "Vandpumpe slukkes",0,errmsg);
         }
     }
 
@@ -923,15 +816,8 @@ double RainHourAccum = 0.0;   //Rain accumulator since start of sample
 //#define RAIN_FACTOR 0.2794  //Argent raingauge 0.2794 mm se https://www.argentdata.com/catalog/product_info.php?products_id=168&osCsid=4gBQZzEt1wYYnSUJ7P9qN3
 double Rain24h [24] = { };  //holder sidste 24 timeres regn
 
-int lastButtonState; //gememr sidste læsnings værdi
-time_t lastDebounceTime;
-int debounceDelay;
-int buttonState;
-
 
 //==================Interrupt rutiner slut =========================
-
-
 
 void ControlMotor(int MotorNumber)
 {
@@ -1066,7 +952,6 @@ void ControlMotor(int MotorNumber)
         //cout << "Afslutning på ControlWindows procedure \n";
         //cout << endl;
     }
-
 }
 
 //Styrer vinduerne 1-3
@@ -1077,121 +962,6 @@ void ControlWindows()
     for (int i=1; i <= 4; i++)
     {
         ControlMotor(i);
-    }
-
-}
-
-
-
-void buttonISR(int pi, unsigned gpio, unsigned level, uint32_t tick)
-{
-    if (level == PI_LOW)
-    {
-        int buttonIndex = -1;
-        int ledPin = -1;
-        std::atomic<bool>* procedureState = nullptr;
-        spdlog::debug("buttonISR gpio: {}  level: {} ",gpio,level);
-        // Determine which button was pressed
-        switch(gpio)
-        {
-        case GPIO_Button_WaterPump:
-            buttonIndex = 0;
-            ledPin = GPIO_LED_WaterPump;
-            procedureState = &procedureWaterPump_Active;
-            spdlog::debug("GPIO_Button_WaterPump");
-            break;
-        case GPIO_Button_StopVent:
-            buttonIndex = 1;
-            ledPin = GPIO_LED_StopVent;
-            procedureState = &procedureStopVent_Active;
-            spdlog::debug("GPIO_Button_StopVentPump");
-            break;
-        case GPIO_Button_Disp:
-            buttonIndex = 2;
-            ledPin = GPIO_LED_Disp;
-            procedureState = &procedureDisp_Active;
-            spdlog::debug("GPIO_Button_Disp");
-            break;
-        default:
-            return;
-        }
-
-        // Debounce check
-        if ((tick - lastInterruptTime[buttonIndex]) < debounceTime) return;
-        lastInterruptTime[buttonIndex] = tick;
-
-        // Toggle state
-        bool newState = !(*procedureState);
-        *procedureState = newState;
-        //gpio_write(ledPin, newState ? 1 : 0);
-
-        spdlog::info("Button NewState {} ledpin {} ", newState, ledPin);
-        string errmsg;
-        if (newState)
-        {
-            spdlog::info("newState: Started");
-            switch(gpio)
-            {
-            case GPIO_Button_WaterPump:
-
-                gpio_write(pi, GPIO_LED_WaterPump,1);
-                ExPi_IOPortWrite(Pi_Relay_WaterPump, 1);
-                db.Update_CurrentValue<string>("WaterPump","On",errmsg);
-                WaterPumpButtonAtTime = time(NULL)+ waterPumpButton_Minutes *60;
-                spdlog::info("WaterPump On until {:%H:%M:%S}", fmt::localtime(WaterPumpButtonAtTime));
-                WaterPumpButtonActive = 1; //Angiver at StopVentButten er aktiv
-                break;
-
-            case GPIO_Button_StopVent:
-                gpio_write(pi, GPIO_LED_StopVent, 1);
-                CurrentStatus_Window1 = 100;  //Vinduer tvinges helt ned
-                NewStatus_Window1 = 0;
-                CurrentStatus_Window2 = 100;
-                NewStatus_Window2 = 0;
-                CurrentStatus_Window3 = 100;
-                NewStatus_Window3 = 0;
-                CurrentStatus_Window4 = 100;
-                NewStatus_Window4 = 0;
-                ControlWindows;
-                StopVentButtonAtTime = time(NULL)+ StopVentsButton_minutes*60; //Deaktiverer automatiske vinduere indtil tid
-                StopVentButtonActive = 1; //Angiver at StopVentButten er aktiv
-                spdlog::info("Stop vinduer knap aktiv indtil {:%H:%M:%S}", fmt::localtime(StopVentButtonAtTime));
-                break;
-            case GPIO_Button_Disp:
-                gpio_write(pi, GPIO_LED_Disp,1);
-                spdlog::info("Disp button knap: on");
-                break;
-            }
-        }
-        else
-        {
-            spdlog::info("newState: Stopped");
-
-            switch(gpio)
-            {
-            case GPIO_Button_WaterPump:
-                gpio_write(pi, GPIO_LED_WaterPump,0);
-                ExPi_IOPortWrite(Pi_Relay_WaterPump, 0);
-                WaterPumpButtonActive = 0;
-                db.Update_CurrentValue<string>("WaterPump","Off", errmsg);
-                spdlog::info("WaterPump Off");
-                break;
-
-            case GPIO_Button_StopVent:
-                gpio_write(pi, GPIO_LED_StopVent,0);
-                StopVentButtonActive = 0;  //Aktiverer automatiske vinduere
-                spdlog::info("Stop vinduer knap: Off");
-                break;
-
-            case GPIO_Button_Disp:
-                gpio_write(pi, GPIO_LED_Disp,0);
-                spdlog::info("Disp button knap off");
-                //ExPi_IOPortWrite(Pi_Relay_WaterPump, 0);
-                break;
-            }
-
-
-        }
     }
 }
 
@@ -1244,20 +1014,8 @@ double Weather_temperature;
 double Weather_humidity;
 
 //--------------------
-std::string str ("Test string");
-
-time_t Status_LastWateringValve1;
-time_t Status_LastWateringValve2;
-time_t Status_LastWateringValve3;
-time_t Status_LastWateringValve4;
-
 time_t Status_LastStartTime1 = 0;
 time_t Status_LastStartTime2 = 0;
-
-time_t Status_StopWateringValve1 = 0;
-time_t Status_StopWateringValve2 = 0;
-time_t Status_StopWateringValve3 = 0;
-time_t Status_StopWateringValve4 = 0;
 
 std::string WaterLevel1_Msg = "Ikke bestemt";
 
@@ -1319,16 +1077,125 @@ int LightValue;
 int SoilMoistureThresholdUp = 400;
 int SoilMoistureThresholdDown = 250;
 
-void doWatering(int MenuValg)
+
+//Jesper vand
+
+std::string timeToString(time_t t)
 {
-    if (MenuValg == Last_WateringControl)
+    std::tm tm{};
+
+    localtime_r(&t, &tm);   // Linux/macOS
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+struct WaterValve {
+    bool statusOn;          // Status for ventil 0:off 1: on
+    time_t OnUntilTime;     // ventil skal lukker på tidspunkt
+    time_t OnTime;          // minutter på når aktiv
+    long statTime;          // Samlet tid med ventil åben
+    int relayPort;          // Pi_Relay_WaterValveX
+    time_t LastWatering;    // Sidste vanding gennemført
+    string DBParameterLastWatering;     // Parameter der benyttes når der gemmes status i DB;
+    };
+
+
+WaterValve myWaterValves[5] = {
+    {false, 0, 0, 0, Pi_Relay_WaterValve1,0, "SidsteVanding_1"},
+    {false, 0, 0, 0, Pi_Relay_WaterValve2,0, "SidsteVanding_2"},
+    {false, 0, 0, 0, Pi_Relay_WaterValve3,0, "SidsteVanding_3"},
+    {false, 0, 0, 0, Pi_Relay_WaterValve4,0, "SidsteVanding_4"},
+    {false, 0, 0, 0, Pi_Relay_WaterValve5,0, "SidsteVanding_5"}
+};
+
+
+void SetWaterValve(int id, bool newState)
+{
+    spdlog::debug("SetWaterValve kanal {} status {}", id, newState);
+    string errmsg;
+    // id = 1..5 → gør det til array-index 0..4
+    int i = id - 1;
+    WaterValve &v = myWaterValves[i];
+    //spdlog::info("v.statusOn {}   v.OnTime {}", v.statusOn, v.OnTime);
+
+    //spdlog::info("før status check for ændring {}  {}", v.statusOn,newState);
+    if (v.statusOn != newState)
+    {
+        spdlog::info("Status ændret");
+        if (!newState)  // Slukker
+        {
+            v.statTime += nu - v.OnTime;
+            v.statusOn = false;
+            spdlog::info("Vanding {} - Slukkes", id);
+            db.AddEventRecord("Vanding", "Ventil lukkes",id,errmsg);
+            string t = showDate(nu);
+
+            db.Update_CurrentValue<string>(v.DBParameterLastWatering,t, errmsg);
+            //spdlog::info("DB update parameter {} med tekst: {} og errmsg: {}",v.DBParameterLastWatering, t, errmsg);
+        }
+        else            // Tænder
+        {
+            v.OnUntilTime = time(0) + v.OnTime;
+            v.statusOn = true;
+            spdlog::info("Vanding {} - Startes kl {:%H:%M:%S} stopper kl {:%H:%M:%S}", id, fmt::localtime(time(0)), fmt::localtime(v.OnUntilTime));
+            db.AddEventRecord("Vanding", "Ventil åbnes",id,errmsg);
+        }
+    }
+
+    ExPi_IOPortWrite(v.relayPort, newState);
+}
+
+bool IsWithinWaterWindow(std::time_t startTime)
+{
+    auto now = std::chrono::system_clock::now();
+    auto start = std::chrono::system_clock::from_time_t(startTime);
+
+    auto windowEnd = start + std::chrono::minutes(3);
+
+    return now >= start && now <= windowEnd;
+}
+
+bool isWatering = false;
+
+void CheckWatering()
+{
+    bool inWindow =
+        IsWithinWaterWindow(Status_VandingStartTime1) ||
+        IsWithinWaterWindow(Status_VandingStartTime2);
+
+    if (inWindow && !isWatering)
+    {
+        // Start vanding
+        for (int i = 0; i < 5; i++)
+        {
+            if (i <=2) {myWaterValves[i].OnTime = Status_VandingsTidValve[i] * AddExtraWaterTime_Greenhouse;}
+            if (i > 2) {myWaterValves[i].OnTime = Status_VandingsTidValve[i] * AddExtraWaterTime_Garden;}
+            myWaterValves[i].OnTime = Status_VandingsTidValve[i];
+            spdlog::debug("Vanding kanal {} OnTime {} ", i+1, myWaterValves[i].OnTime);
+            if (myWaterValves[i].OnTime > 0) {SetWaterValve(i+1,true);}
+        }
+        isWatering = true;
+    }
+    else if (!inWindow && isWatering)
+    {
+        // Vi er ude af tidsvinduet → klar til næste start
+        isWatering = false;
+    }
+
+}
+
+void doWateringMenu(int MenuValg)
+{
+    if (MenuValg == Last_WaterMenuSelection)
     {
         return;
     }
-
-    spdlog::info("doWatering Start med parameter {}", MenuValg);
+    string errmsg;
+    db.AddEventRecord("Manuel vanding", "Manuel vanding",MenuValg,errmsg);
+    spdlog::info("doWateringMenu Start med parameter {}", MenuValg);
     time_t nu = time(NULL);
-    Last_WateringControl = WateringControl;
+    Last_WaterMenuSelection = WaterMenuSelection;
 
     switch (MenuValg)
     {
@@ -1341,12 +1208,11 @@ void doWatering(int MenuValg)
     {
         // 5 min ekstra vand
         spdlog::info("5 min vand til kanal 1");
-        cout << "5 min vand til kanal 1" << endl;
-        Status_WaterValve1 = 1; // åbner ventil 1
-        Status_LastWateringValve1 =  nu ;
-        //SidsteVandingsLabel1 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve1 = nu + 300;
-        Status_WaterManual1 = 0; //Ikke manuel vanding efter tryk på knap
+        myWaterValves[0].OnTime = 5*60;
+        SetWaterValve(1,true);
+        //Status_WaterValve1 = 1; // åbner ventil 1
+        //Status_LastWateringValve1 =  nu ;
+        //Status_WaterManual1 = 0; //Ikke manuel vanding efter tryk på knap
 
         break;
     }
@@ -1354,82 +1220,50 @@ void doWatering(int MenuValg)
     case 3:
     {
         // 5 min ekstra vand
-        cout << "5 min vand til kanal 2" << endl;
         spdlog::info("5 min vand til kanal 2");
-
-        Status_WaterValve2 = 1; // åbner ventil 1
-        Status_LastWateringValve2 =  nu ;
-        //SidsteVandingsLabel2 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve2 = nu + 300;
-        Status_WaterManual2 = 0; //Ikke manuel vanding
+        myWaterValves[1].OnTime = 300;
+        SetWaterValve(2,true);
         break;
     }
 
 
     case 4:
     {
-        // 5 min ekstra vand
         spdlog::info("5 min vand til kanal 3");
-
-        cout << "5 min vand til kanal 3" << endl;
-        Status_WaterValve3 = 1; // åbner ventil 1
-        Status_LastWateringValve3 =  nu ;
-        //SidsteVandingsLabel3 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve3 = nu + 300;
-        Status_WaterManual3 = 0; //Ikke manuel vanding
+        myWaterValves[2].OnTime = 300;
+        SetWaterValve(3,true);
         break;
     }
 
 
     case 5:
     {
-        // 5 min ekstra vand
         spdlog::info("5 min vand til kanal 4");
-
-        cout << "5 min vand til kanal 4" << endl;
-        Status_WaterValve4 = 1; // åbner ventil 1
-        Status_LastWateringValve4 =  nu ;
-        //SidsteVandingsLabel4 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve4 = nu + 300;
-        Status_WaterManual4 = 0; //Ikke manuel vanding
+        myWaterValves[3].OnTime = 300;
+        SetWaterValve(4,true);
         break;
     }
 
     case 6:
     {
-        // 5 min ekstra vand
+
+        spdlog::info("5 min vand til kanal 5");
+        myWaterValves[4].OnTime = 300;
+        SetWaterValve(5,true);
+        break;
+    }
+    case 7:
+    {
+        // 5 min alle kanaler
         spdlog::info("5 min vand til all kanaler");
-
-        cout << "5 min vand til palletank" << endl;
-
-        Status_WaterValve1 = 1; // åbner ventil 1
-        Status_LastWateringValve1 =  nu ;
-        //SidsteVandingsLabel1 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve1= nu + 300;
-
-        Status_WaterManual2 = 0; //Ikke manuel vanding
-        Status_WaterValve2 = 1; // åbner ventil 1
-        Status_LastWateringValve2 =  nu ;
-        //SidsteVandingsLabel2= "'" + showDate(nu) + "'";
-        Status_StopWateringValve2 = nu + 300;
-
-        Status_WaterManual3 = 0; //Ikke manuel vanding
-        Status_WaterValve3 = 1; // åbner ventil 1
-        Status_LastWateringValve3 =  nu ;
-        //SidsteVandingsLabel3 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve3 = nu + 300;
-        Status_WaterManual3 = 0; //Ikke manuel vanding
-
-        Status_WaterValve4 = 1; // åbner ventil 1
-        Status_LastWateringValve4 =  nu ;
-        //SidsteVandingsLabel4 = "'" + showDate(nu) + "'";
-        Status_StopWateringValve4 = nu + 300;
-        Status_WaterManual4 = 0; //Ikke manuel vanding
-
+        for (int i = 0; i < 5; i++) {
+            myWaterValves[i].OnTime = 300;
+            SetWaterValve(i+1,true);
+        }
         break;
     }
 
-    case 7:
+    case 8:
     {
         // Vanding startes og sluttes manuelt
         spdlog::info("5 min vand til palletank");
@@ -1443,18 +1277,12 @@ void doWatering(int MenuValg)
 
     }
 
+    WaterMenuSelection = 1; //Sætter menu til ingen ting
+    db.Update_Setpoint<int>(WaterMenuSelection_SetpointText,WaterMenuSelection,errmsg);
+
 }
 
 
-//-------------------Water flow ----------------------------------
-// The hall-effect flow sensor outputs approximately 4.5 pulses per second per litre/minute of flow.
-/*double calibrationFactor = 7.5;
-volatile int WaterFlowPulseCount;
-double WaterFlowRate;
-unsigned int WaterFlowMililitres;
-unsigned long WaterTotalMililitres;
-unsigned long oldTime;
-*/
 
 
 //--------------------BMP Sensor for Lufttryk-------------------------------
@@ -1614,6 +1442,7 @@ void SetFreshWatertoTank(bool FreshWaterToTank)
             ExPi_IOPortWrite(Pi_Relay_FreshWater, 0);
             db.Update_CurrentValue<string>("WaterToContainer","Off", errmsg);
             spdlog::info("Vandniveau lavt - Vand tilførelse afbrydes");
+            db.AddEventRecord("Palletank", "Tilførelse af friskvand afbrydes",0,errmsg);
         }
 
         if (FreshWaterToTank == 1)    //der er blevet tændt for vandet
@@ -1622,114 +1451,10 @@ void SetFreshWatertoTank(bool FreshWaterToTank)
             FreshWaterToTankOn = 1;
             db.Update_CurrentValue<string>("WaterToContainer","On",errmsg);
             spdlog::info("Vandniveau lavt - Vand tilføres til palletank");
+            db.AddEventRecord("Palletank", "Lav vandstand. Tilførelse af friskvand startes",0,errmsg);
             ExPi_IOPortWrite(Pi_Relay_FreshWater, 1);
         }
     }
-}
-
-void SetWaterValve1(bool WaterValve1)
-{
-
-#if defined(DebugWater)
-
-    cout << "SetWaterValve1 kaldt med værdien " << WaterValve1 <<endl;
-    cout << "WaterValve1On " << WaterValve1On << endl;
-#endif // defined
-
-    if (WaterValve1On != WaterValve1)    //status på vanding ændres
-    {
-        if (WaterValve1 == 0)  //der er blevet slukket for vandet
-        {
-            Stat_TimeWaterValve1 = Stat_TimeWaterValve1 + nu - WaterValve1TimeOn;
-            WaterValve1On = 0;
-            spdlog::info("Vanding 1 - Slukkes");
-        }
-
-        if (WaterValve1 == 1)    //der er blevet tændt for vandet
-        {
-            WaterValve1TimeOn = time(0);
-            WaterValve1On = 1;
-            spdlog::info("Vanding 1 - Startes");
-        }
-    }
-    //Sætter relæ
-    ExPi_IOPortWrite(Pi_Relay_WaterValve1, WaterValve1);
-}
-
-
-void SetWaterValve2(bool WaterValve2)
-{
-
-    if (WaterValve2On != WaterValve2)    //status på vanding ændres
-    {
-        if (WaterValve2 == 0)  //der er blevet slukket for vandet
-        {
-            Stat_TimeWaterValve2 = Stat_TimeWaterValve2 + nu - WaterValve2TimeOn;
-            WaterValve2On = 0;
-            spdlog::info("Vanding 2 - Slukkes");
-        }
-
-        if (WaterValve2 == 1)    //der er blevet tændt for vandet
-        {
-            WaterValve2TimeOn = time(0);
-            WaterValve2On = 1;
-            spdlog::info("Vanding 2 - Startes");
-        }
-    }
-
-    //Sætter relæ
-    ExPi_IOPortWrite(Pi_Relay_WaterValve2, WaterValve2);
-
-}
-
-
-void SetWaterValve3(bool WaterValve3)
-{
-
-
-    if (WaterValve3On != WaterValve3)    //status på vanding ændres
-    {
-        if (WaterValve3 == 0)  //der er blevet slukket for vandet
-        {
-            Stat_TimeWaterValve3 = Stat_TimeWaterValve3 + nu - WaterValve3TimeOn;
-            WaterValve3On = 0;
-            spdlog::info("Vanding 3 - Slukkes");
-
-        }
-
-        if (WaterValve3 == 1)    //der er blevet tændt for vandet
-        {
-            WaterValve3TimeOn = time(0);
-            WaterValve3On = 1;
-            spdlog::info("Vanding 3 - Startes");
-
-        }
-    }
-    ExPi_IOPortWrite(Pi_Relay_WaterValve3, WaterValve3);
-}
-
-void SetWaterValve4(bool WaterValve4)
-{
-
-    if (WaterValve4On != WaterValve4)    //status på vanding ændres
-    {
-        if (WaterValve4 == 0)  //der er blevet slukket for vandet
-        {
-            Stat_TimeWaterValve4 = Stat_TimeWaterValve4 + nu - WaterValve4TimeOn;
-            WaterValve4On = 0;
-            spdlog::info("Vanding 4 - Slukkes");
-
-        }
-
-        if (WaterValve4 == 1)    //der er blevet tændt for vandet
-        {
-            WaterValve4TimeOn = time(0);
-            WaterValve4On = 1;
-            spdlog::info("Vanding 4 - Startes");
-
-        }
-    }
-    ExPi_IOPortWrite(Pi_Relay_WaterValve4, WaterValve4);
 }
 
 
@@ -1738,26 +1463,26 @@ void SetHeat(bool HeatRelay)
     spdlog::debug("SetHeat 1 {}", HeatRelay);
     if (AfterOrangeriSetup == 0)
     {
-        HeatOn = 0;
+        Status_HeatOn = 0;
         return;
     }
     spdlog::debug("SetHeat 2 {} ", HeatRelay);
     ExPi_IOPortWrite(Pi_Relay_Heat, HeatRelay);
 
-    if (HeatOn != HeatRelay)    //status på vanding ændres
+    if (Status_HeatOn != HeatRelay)    //status på vanding ændres
     {
-        spdlog::info("HeatOn status andret");
+        spdlog::info("Status_HeatOn status andret");
         if (HeatRelay == 0)  //der er blevet slukket for vandet
         {
             Stat_TimeHeat = Stat_TimeHeat + nu - HeatTimeOn;
-            HeatOn = 0;
+            Status_HeatOn = 0;
             spdlog::info("Der slukkes for varmen");
         }
 
         if (HeatRelay == 1)    //der er blevet tændt for varmen
         {
             HeatTimeOn = time(0);
-            HeatOn = 1;
+            Status_HeatOn = 1;
             spdlog::info("Det tændes for varmen");
         }
     }
@@ -1826,54 +1551,46 @@ void UpdateBlynkAfterFastTimer()
             cout << "Start Update...FastTimer 0.3 " << msg << endl;
             db.Update_CurrentValue<string>("LastRunTime",msg, errmsg);
 
-
-#if defined(DebugWater)
-            cout << "Tidspunkt nu: " << nu << endl;
-            cout << "Vanding 1   stop: "  << Status_StopWateringVentil1 << endl;
-            cout << "Vanding 2   stop: "  << Status_StopWateringVentil2 << endl;
-            cout << "Vanding 3   stop: "  << Status_StopWateringVentil3 << endl;
-            cout << "Vanding 4   stop: "  << Status_StopWateringVentil4 << endl;
-#endif // defined
-
-            if ( nu  >= Status_StopWateringValve1  & Last_WateringControl == 2)
+/*
+            if ( nu  >= myWaterValves[0].OnUntilTime & Last_WaterMenuSelection == 2)
             {
 
-                WateringControl = 1; //Sætter menu til "Ingen vanding"
-
-                db.Update_Setpoint<int>(WateringControl_SetpointText, WateringControl,errmsg);
+                WaterMenuSelection = 1; //Sætter menu til "Ingen vanding"
+                db.Update_Setpoint<int>(WaterMenuSelection_SetpointText, WaterMenuSelection,errmsg);
                 db.Update_CurrentValue<string>("Vanding1Header"," ", errmsg); //Sletter label der angiver at der vandes
             }
 
-            if ( nu  >= Status_StopWateringValve2 & Last_WateringControl == 3)
+            if ( nu  >= myWaterValves[1].OnUntilTime & Last_WaterMenuSelection == 3)
             {
-                WateringControl = 1; //Sætter menu til "Ingen vanding"
-                db.Update_Setpoint<int>(WateringControl_SetpointText, WateringControl,errmsg);
+                WaterMenuSelection = 1; //Sætter menu til "Ingen vanding"
+                db.Update_Setpoint<int>(WaterMenuSelection_SetpointText, WaterMenuSelection,errmsg);
                 db.Update_CurrentValue<string>("Vanding2Header"," ", errmsg);
             }
 
-            if ( nu  >= Status_StopWateringValve3 & Last_WateringControl == 4)
+            if ( nu  >= myWaterValves[2].OnUntilTime & Last_WaterMenuSelection == 4)
             {
-                WateringControl = 1; //Sætter menu til "Ingen vanding"
-                db.Update_Setpoint<int>(WateringControl_SetpointText, WateringControl,errmsg);
+                WaterMenuSelection = 1; //Sætter menu til "Ingen vanding"
+                db.Update_Setpoint<int>(WaterMenuSelection_SetpointText, WaterMenuSelection,errmsg);
                 db.Update_CurrentValue<string>("Vanding3Header"," ", errmsg);
 
             }
 
-            if ( nu  >= Status_StopWateringValve4 & Last_WateringControl == 5)
+            if ( nu  >= myWaterValves[3].OnUntilTime & Last_WaterMenuSelection == 5)
             {
-                WateringControl = 1; //Sætter menu til "Ingen vanding"
-                db.Update_Setpoint<int>(WateringControl_SetpointText, WateringControl,errmsg);
+                WaterMenuSelection = 1; //Sætter menu til "Ingen vanding"
+                db.Update_Setpoint<int>(WaterMenuSelection_SetpointText, WaterMenuSelection,errmsg);
                 db.Update_CurrentValue<string>("Vanding4Header"," ", errmsg);
             }
 
-            if ( nu  >= Status_StopWateringValve1  & Last_WateringControl == 6)
+            if ( nu  >= myWaterValves[4].OnUntilTime  & Last_WaterMenuSelection == 6)
             {
-                WateringControl  = 1; //Sætter menu til "Ingen vanding"
-                db.Update_Setpoint<int>(WateringControl_SetpointText, WateringControl,errmsg);
-                db.Update_CurrentValue<string>("Vanding1Header"," ", errmsg); //Sletter label der angiver at der vandes
+                WaterMenuSelection  = 1; //Sætter menu til "Ingen vanding"
+                db.Update_Setpoint<int>(WaterMenuSelection_SetpointText, WaterMenuSelection,errmsg);
+                db.Update_CurrentValue<string>("Vanding5Header"," ", errmsg); //Sletter label der angiver at der vandes
             }
+*/
 
-            cout << "Motor1_Moving " << Motor1_Moving << endl;
+
             if (Motor1_Moving == 0)
             {
                 //(WindowPct_Virtual_Pin, NewStatus_Window1);
@@ -1950,35 +1667,6 @@ void ControlGreenhouseFastTimer()
 
     }
 
-    //msg1 = showDate(WaterPumpButtonActive);
-    //cout << "WaterPumpButtonActive indtil " << msg1 << endl;
-
-    /*    WaterPumpButtonState =  gpioRead(Button_WaterPump_Pin);
-        StopVentsButtonState =  gpioRead(Button_StopVents_Pin);
-        DispButtonState =  gpioRead(Button_Disp_Pin);
-    */
-#if defined(DebugWater)
-    cout << "WaterPumpButtonState: " << WaterPumpButtonState << " waterbutton_PumpOn_minutes: " << waterbutton_PumpOn_minutes << endl;
-#endif // defined
-    /*    cout << "StopVentsButtonState: " << StopVentsButtonState << " StopVentsButton_minutes: " << StopVentsButton_minutes << endl;
-        cout << "DispButtonState: " << DispButtonState << endl;
-    */
-    //cout << "WaterPumpButtonActive " << WaterPumpButtonActive << " " << nu	<< endl;
-    //Hvis Pumpe skal stoppes da tid efter tryk er udløbet,
-    //Hvis den er 0 er den stoppet tidligere
-    /*   if (WaterPumpButtonActive < nu && WaterPumpButtonActive > 0)
-       {
-           cout << "Pumpe stoppes tid er udløbet " << endl;
-           //Hvis WaterPumpButtonActive ikke er igang slukkes for vandet medmindre
-           //der vandes automatisk med en af de 4 Valveer
-           if (Status_WaterValve1 == 0 || Status_WaterValve2 == 0 || Status_WaterValve3 == 0 || Status_WaterValve4 == 0)
-           {
-    F
-               WaterPumpButtonActive  = 0;
-               myControlWaterPumpButton(WaterPumpButtonActive);
-           }
-       }
-    */
 
     if (nu > StopVentButtonAtTime && StopVentButtonAtTime > 0)
     {
@@ -1998,6 +1686,7 @@ void ControlGreenhouseFastTimer()
         //SetWaterPump(Status_WaterPump);
     }
 
+    CheckWatering();
 
     /*  if (DispButtonActive < nu)
       {
@@ -2009,28 +1698,6 @@ void ControlGreenhouseFastTimer()
     */
 
 
-    //Knap for at tvinge vinduerne til at gå i stå i aktuel position
-    /*if (ClosedVentsButtonActive > 0 and ClosedVentsButtonState == 1)
-     {ClosedVentsButtonActive = 0;
-      ClosedVentsButtonState = 0;
-     } //Nulstiller knap så den ikke bruges igen til at ændre status
-
-    if (ClosedVentsButtonActive == 0 and ClosedVentsButtonState == 1)
-     {ClosedVentsButtonActive = time(NULL);}
-    */
-    //Tænder LED hvis vandpumpen er sat til at kører manuelt
-    /*if (ClosedVentsButtonActive > 0)
-    {gpio_write(LED_Stoped_Vents_Pin, HIGH);}
-      else
-    {gpio_write(LED_Stoped_Vents_Pin, LOW);}
-    */
-
-    // cout << "Vinduer:" << endl;
-    // cout << "AutoWindow "  << AutoWindow << endl;
-
-    //spdlog::info("AutoWindow: {}  StopVeentButtenActive {}", AutoWindow, StopVentsButtonActive);
-    //Styrer hvordan vinduer skal åbnes og lukkes hvis automatik er sat
-    //til og knap for StopVents ikke er aktiv
 
 //    if (AutoWindow == 1 and StopVentsButtonActive == 0)
     spdlog::debug("AutoWindow {} StopVentsButtonActive {} ", AutoWindow, StopVentButtonActive);
@@ -2095,31 +1762,40 @@ void ControlGreenhouseFastTimer()
     }
 
     //Lukker for varme
-    if ( nu  >= StopHeating && HeatOn == 1)
+    if ( nu  >= StopHeating && Status_HeatOn == 1)
     {
-        //Status_HeatUp = 0;
+        //Status_HeatOn = 0;
         SetHeat(0);
         spdlog::info("Varme stoppes da tid for opvarmning er overskredet");
     };
 
-    if (nu < StopHeating && HeatOn == 0)
+    if (nu < StopHeating && Status_HeatOn == 0)
     {
-        //Status_HeatUp = 1;
+        //Status_HeatOn = 1;
         SetHeat(1);
         spdlog::info("Varme startes da nu er < StopHeating");
     }
 
 
     string errmsg;
-    if ( nu  >= Status_StopWateringValve1 && Status_WaterValve1 == 1)
+
+
+    //Vanding stoppes hvis tid er opnået
+    for (int i = 0; i < 5; i++)
     {
-        Status_WaterValve1 = 0;
-        string t = showDate(Status_StopWateringValve1);
-        db.Update_CurrentValue<string>(LastWatering1_Parameter,t, errmsg);
-        spdlog::info("Vanding kanal 1 stoppes {}", t );
+        spdlog::debug("Vanding status {}:{}", i, myWaterValves[i].statusOn);
+
+        if (nu >= myWaterValves[i].OnUntilTime && myWaterValves[i].statusOn == true)
+        {
+            SetWaterValve(i+1, false); //Slukker for vandet
+        }
+
+
 
     }
 
+
+/*
     if ( nu  >= Status_StopWateringValve2 && Status_WaterValve2 == 1)
     {
         Status_WaterValve2 = 0;
@@ -2143,14 +1819,14 @@ void ControlGreenhouseFastTimer()
         spdlog::info("Vanding kanal 4 stoppes {}", t );
         db.Update_CurrentValue<string>(LastWatering4_Parameter,t, errmsg);
     }
+
+    */
+
+
+
     //Styrer vinduer efter behov defineret tidligere
     ControlWindows();
 
-    //spdlog::info("Inden SetWaterValves 1: {} 2: {} :3 {} 4: {} WaterPump: {}", Status_WaterValve1, Status_WaterValve2, Status_WaterValve3, Status_WaterValve4, Status_WaterPump);
-    SetWaterValve1(Status_WaterValve1);
-    SetWaterValve2(Status_WaterValve2);
-    SetWaterValve3(Status_WaterValve3);
-    SetWaterValve4(Status_WaterValve4);
     SetWaterPump(Status_WaterPump);
 
     SetFreshWatertoTank(Status_FreshWaterToTankValve);
@@ -2239,18 +1915,9 @@ void UpdateBlynkAfterSlowTimer()
 
 
 
-        if (Status_LastWateringValve1 >= Status_StopWateringValve1 )
-        {
-            //spdlog::info("SidsteVandingsLabel1, {}", SidsteVandingsLabel1);
-            //spdlog::info("SidsteVandingsLabel1_Last, {}", SidsteVandingsLabel1_last);
-            string d = showDate(Status_LastWateringValve1);
-            db.Update_CurrentValue<string>("SidsteVandingLabel1", d, errmsg);
-            //SidsteVandingsLabel1_last = SidsteVandingsLabel1;
-        }
 
-
-        db.Update_CurrentValue<double>("LastWateringTimeLength_Greenhouse",Status_VandingsTidValve1*60*AddExtraWaterTime_Greenhouse, errmsg);
-        db.Update_CurrentValue<double>("LastWateringTimeLength_Garden",Status_VandingsTidValve1*60*AddExtraWaterTime_Garden, errmsg);
+        db.Update_CurrentValue<double>("LastWateringTimeLength_Greenhouse",myWaterValves[0].OnTime*60*AddExtraWaterTime_Greenhouse, errmsg);
+        db.Update_CurrentValue<double>("LastWateringTimeLength_Garden",myWaterValves[0].OnTime*60*AddExtraWaterTime_Garden, errmsg);
 
         //Giver status på om Valve der åbner for vandhane vand til palletank er åben
         if (Status_FreshWaterToTankValve == 0)
@@ -2266,13 +1933,11 @@ void UpdateBlynkAfterSlowTimer()
 
         ForceBlynkUpdate = false; //Sikre at de ved næste BlynkUpdate opdatres værdier uanst om de er ændret eller ej
 
-        myDelay(blynkDelay);
         int CurrentHour = round(getHour(nu));
         Rain24h[CurrentHour] = RainHourAccum;
         string mystr =  showDate(nu) + to_string(CurrentHour);
         //if (UpdateBlynkOk()) {Blynk.virtualWrite(RainTable_Virtual_Pin,"update",CurrentHour, mystr.c_str(),RainHourAccum);}
         cout << "Opdaterer regnsummer" << endl;
-        myDelay(blynkDelay);
         double RainSum3 = 0;
         if (CurrentHour > 2)
         {
@@ -2339,6 +2004,7 @@ void UpdateBlynkAfterSlowTimer()
 ofstream DataFile;
 string DataFileName = "/home/pi/Documents/Orangeri/orangeri.csv";
 
+/*
 bool AppendDataToFile()
 {
     try
@@ -2354,8 +2020,7 @@ bool AppendDataToFile()
                      "," << Weather_humidity << "," << AirFlowValue << "," << RainHourAccum << "," << RainDayAccum <<
                      "," << ControlBoxPressure << "," << ControlBoxTemperature << "," << Greenhouse_temperature <<
                      "," << Greenhouse_humidity << "," << Extra1_temperature << "," << Extra2_temperature <<
-                     "," << Stat_TimeWaterValve1 << "," << Stat_TimeWaterValve2 << "," << Stat_TimeHeat <<
-                     "," << Stat_TimeFreshWaterToTank << "," << Stat_TimeLight << "," << endl;
+                     "," << endl;
 
             DataFile.close();
         }
@@ -2370,8 +2035,69 @@ bool AppendDataToFile()
 
 
 }
+*/
+
+time_t parse_time(const std::string& s) {
+    std::tm tm = {};
+    std::istringstream iss(s);
+
+    iss >> std::get_time(&tm, "%H:%M");
+    if (!iss) {
+        throw std::runtime_error("Kunne ikke parse tidspunktet");
+    }
+
+    // Hent dags dato
+    std::time_t now = std::time(nullptr);
+    std::tm today = *std::localtime(&now);
+
+    // Kopiér datoen ind
+    tm.tm_year = today.tm_year;
+    tm.tm_mon  = today.tm_mon;
+    tm.tm_mday = today.tm_mday;
+
+    // Lad mktime selv afgøre DST
+    tm.tm_isdst = -1;
+
+    return std::mktime(&tm);
+}
+
+//Læser de sætpunkter der skal opdateres fra databasen med ofte mellemrum, da det fungerer som en form for mennu
+void ReadSetpointMenues()
+{
+    string sqlError;
+
+    string Parameter = WaterMenuSelection_SetpointText;
+    int WaterMenuSelection;
+    db.Get_Setpoint<int>(Parameter, WaterMenuSelection, 1, sqlError);
+    if (WaterMenuSelection > 1)
+    {
+        spdlog::info("VandingsMenu kaldt med {}",WaterMenuSelection);
+        doWateringMenu(WaterMenuSelection);
+    }
+
+    Parameter = "VinduesKontrol";
+    int VinduesKontrol;
+    db.Get_Setpoint<int>(Parameter, VinduesKontrol, 5, sqlError);
+    if (VinduesKontrol =! 5)
+    {
+        spdlog::info("Vindues kontrol aktiveret med kode {}", VinduesKontrol);
+        ManageWindows(VinduesKontrol);
+    }
+
+    Parameter = "VinduesStyring";
+    int VinduesStyring;
+    db.Get_Setpoint<int>(Parameter, VinduesStyring, 20, sqlError);
+    if (VinduesStyring == 0)
+    {
+        AutoWindow = 1;
+    }
+    else
+    {
+        AutoWindow = 0;
+    }
 
 
+}
 void ReadSetpoints()
 {
 
@@ -2394,47 +2120,38 @@ void ReadSetpoints()
     Parameter = "Temperatur_Styring";
     db.Get_Setpoint<int>(Parameter, Status_AutomaticControl, 1, sqlError);
 
-    Parameter = WateringControl_SetpointText;
-    db.Get_Setpoint<int>(Parameter, WateringControl, 1, sqlError);
 
     Parameter = "Vanding1_Start";
-    db.Get_Setpoint<int>(Parameter, Status_VandingStartTime1, 9, sqlError);
+    string time1;
+
+    db.Get_Setpoint<string>(Parameter, time1, "09:00", sqlError);
+    Status_VandingStartTime1 = parse_time(time1);
 
     Parameter = "Vanding2_Start";
-    db.Get_Setpoint<int>(Parameter, Status_VandingStartTime2, 20, sqlError);
+    db.Get_Setpoint<string>(Parameter, time1, "20:00", sqlError);
+    Status_VandingStartTime2 = parse_time(time1);
+
+    spdlog::info("Status_VandingStartTime1: {:%H:%M}, Status_VandingStartTime2: {:%H:%M}", fmt::localtime(Status_VandingStartTime1), fmt::localtime(Status_VandingStartTime2));
+
 
     Parameter = "VandingsTid_Ventil1";
-    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve1, 20, sqlError);
+    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve[0], 20, sqlError);
+
 
     Parameter = "VandingsTid_Ventil2";
-    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve2, 20, sqlError);
+    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve[1], 20, sqlError);
 
     Parameter = "VandingsTid_Ventil3";
-    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve3, 20, sqlError);
+    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve[2], 20, sqlError);
 
     Parameter = "VandingsTid_Ventil4";
-    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve4, 20, sqlError);
+    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve[3], 20, sqlError);
 
-    Parameter = "VinduesKontrol";
-    db.Get_Setpoint<int>(Parameter, VinduesKontrol, 5, sqlError);
+    Parameter = "VandingsTid_Ventil5";
+    db.Get_Setpoint<int>(Parameter, Status_VandingsTidValve[4], 20, sqlError);
 
-    if (VinduesKontrol =! 5)
-    {
-        spdlog::info("Vindues kontrol aktiveret med kode {}", VinduesKontrol);
-        ManageWindows(VinduesKontrol);
-    }
-
-
-    Parameter = "VinduesStyring";
-    db.Get_Setpoint<int>(Parameter, VinduesStyring, 20, sqlError);
-    if (VinduesStyring == 0)
-    {
-        AutoWindow = 1;
-    }
-    else
-    {
-        AutoWindow = 0;
-    }
+    //Vandingstider er angivet i minutter og skal være i sekunder i programmet
+    for (int i = 0; i <=4; i ++) {Status_VandingsTidValve[i] = Status_VandingsTidValve[i]*60;}
 
     Parameter = "AarsTid";
     db.Get_Setpoint<int>(Parameter, Aarstid, 20, sqlError);
@@ -2482,9 +2199,11 @@ void ReadSetpoints()
 
 time_t convertToTimeT(const std::string& datetime)
 {
+    //spdlog::info("ConvertToTimeT  Input: {}", datetime);
     std::tm tm = {};
     std::istringstream ss(datetime);
     ss >> std::get_time(&tm, "%y-%m-%d %H:%M");
+
     if (ss.fail())
     {
         throw std::runtime_error("Failed to parse datetime string.");
@@ -2498,6 +2217,9 @@ time_t convertToTimeT(const std::string& datetime)
 
     tm.tm_sec = 0;
     tm.tm_hour = tm.tm_hour-1;  //????
+
+    time_t test = std::mktime(&tm);
+    //spdlog::info("ConvertToTimeT 2 {}",test);
     return std::mktime(&tm);
 }
 
@@ -2541,46 +2263,18 @@ void LoadDBValues()
             spdlog::info("SidsteVandingsTime2: {}", formatted_time);
         }
 
-        result = db.Get_CurrentValue<string>(LastWatering1_Parameter, readValue, updateTime, sqlError);
-        spdlog::info("Read SidsteVandingsLabel1: Result {} Value: {}", result, readValue);
-        if (result && readValue.length() > 2)
+        for (int i = 0; i < 5; i++)
         {
-            Status_LastWateringValve1 = convertToTimeT(readValue);
-            Status_LastStartTime1 = Status_LastWateringValve1;
-            std::string formatted_time = showDate(Status_LastWateringValve1);
-            spdlog::info("LastWatering1: {}", formatted_time);
+            result = db.Get_CurrentValue<string>(myWaterValves[i].DBParameterLastWatering, readValue, updateTime, sqlError);
+            spdlog::info("Read SidsteVandingsLabel{}: Result {} Value: {}", i+1, result, readValue);
+            if (result && readValue.length() > 2)
+            {
+                myWaterValves[i].LastWatering = convertToTimeT(readValue);
+                //Status_LastStartTime1 = myWaterValves[0].LastWatering;
+                std::string formatted_time = showDate(myWaterValves[i].LastWatering);
+                spdlog::info("LastWatering{}: {}", i+1, formatted_time);
+            }
         }
-
-        result = db.Get_CurrentValue<string>(LastWatering2_Parameter, readValue, updateTime, sqlError);
-        if (updateTime.length() > 2)
-        {
-            Status_LastWateringValve2 = convertToTimeT(readValue);
-            Status_LastStartTime2 = Status_LastWateringValve2;
-        }
-
-        result = db.Get_CurrentValue<string>(LastWatering3_Parameter, readValue, updateTime, sqlError);
-        if (updateTime.length() > 2)
-        {
-            Status_LastWateringValve3 = convertToTimeT(readValue);
-        }
-
-        result = db.Get_CurrentValue<string>(LastWatering4_Parameter, readValue, updateTime, sqlError);
-        if (updateTime.length() > 2)
-        {
-            Status_LastWateringValve4 = convertToTimeT(readValue);
-        }
-
-        std::string formatted_time = showDate(Status_LastWateringValve1);
-        spdlog::info("LastWatering1: {}", formatted_time);
-        formatted_time = showDate(Status_LastWateringValve2);
-        spdlog::info("LastWatering2: {}", formatted_time);
-        formatted_time = showDate(Status_LastWateringValve3);
-        spdlog::info("LastWatering3: {}", formatted_time);
-        formatted_time = showDate(Status_LastWateringValve4);
-
-        spdlog::info("LastWatering4: {}", formatted_time);
-
-
 
         result = db.Get_CurrentValue<double>(WindowsPct_Parameter, readDouble, updateTime, sqlError);
         CurrentStatus_Window1 = readDouble;
@@ -2606,13 +2300,14 @@ void LoadDBValues()
         RainHourAccum = readDouble;
         spdlog::info("RainHourAccum {}", RainHourAccum);
 
-        Stat_TimeWaterValve1 = GetXMLValueDouble("/Orangeri/RessourceUse/TimeWaterValve1",0);
+        /*Stat_TimeWaterValve1 = GetXMLValueDouble("/Orangeri/RessourceUse/TimeWaterValve1",0);
         spdlog::info("Stat_TimeWaterValve1 {}",Stat_TimeWaterValve1);
         Stat_TimeWaterValve2 = GetXMLValueDouble("/Orangeri/RessourceUse/TimeWaterValve2",0);
         spdlog::info("Stat_TimeWaterValve2 {}",Stat_TimeWaterValve2);
+        */
         Stat_TimeFreshWaterToTank = GetXMLValueDouble("/Orangeri/RessourceUse/FreshWaterToTank",0);
         spdlog::info("Stat_TimeFreshWaterToTank {}", Stat_TimeFreshWaterToTank);
-        Stat_TimeHeat = GetXMLValueDouble("/Orangeri/RessourceUse/TimeHeatOn",0);
+        Stat_TimeHeat = GetXMLValueDouble("/Orangeri/RessourceUse/TimeStatus_HeatOn",0);
         spdlog::info("Stat_Heat {} ", Stat_TimeHeat);
         Stat_TimeLight = GetXMLValueDouble("/Orangeri/RessourceUse/LightGreenhouse",0);
         spdlog::info("Stat_Light {}",Stat_TimeLight);
@@ -2645,10 +2340,11 @@ void SaveDBValues()
                                    const T& value,
                                    std::string& sqlError)*/
         string err;
-        db.Update_CurrentValue<string>(LastWatering1_Parameter, showDate(Status_LastWateringValve1), err);
-        db.Update_CurrentValue<string>(LastWatering2_Parameter, showDate(Status_LastWateringValve2), err);
-        db.Update_CurrentValue<string>(LastWatering3_Parameter, showDate(Status_LastWateringValve3), err);
-        db.Update_CurrentValue<string>(LastWatering4_Parameter, showDate(Status_LastWateringValve4), err);
+        /*for (int i = 0; i < 5; i++)
+        {
+            db.Update_CurrentValue<string>(myWaterValves[i].DBParameterLastWatering, showDate(myWaterValves[i].LastWatering), err);
+        }
+*/
 
         db.Update_CurrentValue<string>(LastWateringTime1_Parameter, showDate(Status_LastStartTime1), err);
         db.Update_CurrentValue<string>(LastWateringTime2_Parameter, showDate(Status_LastStartTime2), err);
@@ -2667,7 +2363,7 @@ void SaveDBValues()
         SetXMLValueDouble("/Orangeri/RessourceUse/TimeWaterValve3",Stat_TimeWaterValve3);
         SetXMLValueDouble("/Orangeri/RessourceUse/TimeWaterValve4",Stat_TimeWaterValve4);
         SetXMLValueDouble("/Orangeri/RessourceUse/FreshWaterToTank",Stat_TimeFreshWaterToTank);
-        SetXMLValueDouble("/Orangeri/RessourceUse/TimeHeatOn",Stat_TimeHeat);
+        SetXMLValueDouble("/Orangeri/RessourceUse/TimeStatus_HeatOn",Stat_TimeHeat);
         SetXMLValueDouble("/Orangeri/RessourceUse/LightGreenhouse",Stat_TimeLight);
         */
         //SetXMLValueDouble("/Orangeri/StatisticsValues/RainDayAccum", RainDayAccum);
@@ -2716,11 +2412,11 @@ void WriteStatus()
 {
 
     /*
-        int count;
+        int cStatus_Status_WaterValve3Onount;
         char buffer[100];
 
         spdlog::info("Relæ status");
-        count = sprintf(buffer, "Varme tændt: {}", HeatOn);
+        count = sprintf(buffer, "Varme tændt: {}", Status_HeatOn);
         spdlog::info(buffer);
 
         count = sprintf(buffer, "Udluftning med pumpe/Kunstlys: {}", LightOn);
@@ -2729,11 +2425,11 @@ void WriteStatus()
         count = sprintf(buffer, "Vand til palletank: {}", FreshWaterToTankOn);
         spdlog::info(buffer);
 
-        count = sprintf(buffer, "VandingsValve 1:  {}", WaterValve1On);
+        count = sprintf(buffer, "VandingsValve 1:  {}", Status_WaterValve1On);
         spdlog::info(buffer);
-        count = sprintf(buffer, "VandingsValve 2:  {}", WaterValve2On);
+        count = sprintf(buffer, "VandingsValve 2:  {}", Status_WaterValve2On);
         spdlog::info(buffer);
-        count = sprintf(buffer, "VandingsValve 3:  {}", WaterValve3On);
+        count = sprintf(buffer, "VandingsValve 3:  {}", Status_WaterValve3On);
         spdlog::info(buffer);
         count = sprintf(buffer, "VandingsValve 4:  {}", WaterValve4On);
         spdlog::info(buffer);
@@ -2756,15 +2452,29 @@ void Vanding(int WaterTimerNumber)
         Status_LastStartTime2 = nu;
     }
 
-    if (Status_VandingsTidValve1 > 0) //Hvis antal minutter er > 0 og vanding ikke er i gang
+
+    for (int i = 0; i < 5; i++)
     {
-        spdlog::info("Status_VandingsTidValve1 {}", Status_VandingsTidValve1);
-        Status_WaterValve1 = 1;  //Valve 1 skal åbnes
-        Status_StopWateringValve1 =  nu + (Status_VandingsTidValve1*60*AddExtraWaterTime_Greenhouse);  //Beregning af tidspunkt der stoppes
-        Status_LastWateringValve1 =  nu;  //Sidste vandingstidspunkt gemmes
+
+        /*myWaterValves[i].OnTime = Status_VandingsTidValve[i];
+
+        spdlog::info("Vanding kanal {} OnTime {} ", i+1, myWaterValves[i].OnTime);
+        SetWaterValve(i+1,true);
+*/
+        /*if (myWaterValves[i].OnTime > 0) //Hvis antal minutter er > 0 skal der vandes
+        {
+            myWaterValves[i].OnTime = Status_VandingsTidValve[i];
+
+            myWaterValves[i].statusOn = 1;  //Valve skal åbnes
+            myWaterValves[i].OnUntilTime =  nu + (myWaterValves[i].OnTime*60*AddExtraWaterTime_Greenhouse);  //Beregning af tidspunkt der stoppes
+            myWaterValves[i].LastWatering =  nu;  //Sidste vandingstidspunkt gemmes
+            spdlog::info("Vanding startet for ventil {} og stoppes igen {:%H:%M:%S}", i+1, fmt::localtime(myWaterValves[i].OnUntilTime));
+
+        }
+        */
     }
 
-    if (Status_VandingsTidValve2 > 0) //Er sat i Blynk som antal minutter der skal vandes
+  /*  if (Status_VandingsTidValve2 > 0) //Er sat i Blynk som antal minutter der skal vandes
     {
         spdlog::info("Status_VandingsTidValve2 {}", Status_VandingsTidValve2);
         Status_WaterValve2 = 1;
@@ -2787,6 +2497,14 @@ void Vanding(int WaterTimerNumber)
         Status_StopWateringValve4 =  nu  + Status_VandingsTidValve4*60*AddExtraWaterTime_Garden;
         Status_LastWateringValve4 =  nu ;
     }
+    if (Status_VandingsTidValve5 > 0)
+    {
+        spdlog::info("Status_VandingsTidValve5 {}", Status_VandingsTidValve5);
+        Status_WaterValve5 = 1;
+        Status_StopWateringValve5 =  nu  + Status_VandingsTidValve5*60*AddExtraWaterTime_Garden;
+        Status_LastWateringValve5 =  nu ;
+    }
+*/
 }
 
 //-----------------------Funktion der styrer og måler klimaet ---------------------------
@@ -2820,7 +2538,7 @@ void ControlGreenhouseSlowTimer()
 
 
     OpenWindowsOneStepMore(Vinduer_1TrinMere);
-
+    ReadSetpointMenues();
     msg1 = showDate(nu);
     msg2 = showDate(LastRunTime);
 
@@ -2860,11 +2578,10 @@ void ControlGreenhouseSlowTimer()
 
         db.Update_HistoryValue<double>(HeatTimeOn_Text, Stat_TimeHeat, errmsg);
         db.Update_HistoryValue<double>(FreshWaterToTankTime_Text, Stat_TimeFreshWaterToTank, errmsg);
-        db.Update_HistoryValue<double>(WaterValve1Time_Text, Stat_TimeWaterValve1, errmsg);
-        db.Update_HistoryValue<double>(WaterValve2Time_Text, Stat_TimeWaterValve2, errmsg);
-        db.Update_HistoryValue<double>(WaterValve3Time_Text, Stat_TimeWaterValve3, errmsg);
-        db.Update_HistoryValue<double>(WaterValve4Time_Text, Stat_TimeWaterValve4, errmsg);
 
+        for (int i = 0; i < 5; i++) {
+        db.Update_HistoryValue<double>(WaterValve1Time_Text, myWaterValves[i].statTime, errmsg);
+        }
 
 
         LastDayChanged = getDay(nu);  //Bruges til holde styr på om daglige data skal nulstilles
@@ -2873,10 +2590,12 @@ void ControlGreenhouseSlowTimer()
         WaterTotalFlow2 = 0;
         WaterTotalFlow3 = 0;
         Stat_TimeHeat = 0;
-        Stat_TimeWaterValve1 = 0;
-        Stat_TimeWaterValve2 = 0;
-        Stat_TimeWaterValve3 = 0;
-        Stat_TimeWaterValve4 = 0;
+        for (int i = 0; i < 5; i++)
+        {
+            myWaterValves[i].statTime = 0;
+        }
+
+
         Stat_TimeFreshWaterToTank = 0;
     }
     int CurrentHour;
@@ -2897,7 +2616,7 @@ void ControlGreenhouseSlowTimer()
             GreenhouseTempAvgHour = RoundToDecimal(GreenhouseHourTempStats.GetMean(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
             WeatherTempAvgHour = RoundToDecimal(WeatherHourTempStats.GetMean(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
             RainHourAccum = RoundToDecimal(RainHourStats.GetSum(),1);
-
+            spdlog::info("RainHourAccum  {}", RainHourAccum);
             db.Update_HistoryValue<double>(TempAvgHour_Text, GreenhouseTempAvgHour, errmsg);
             db.Update_HistoryValue<double>(WeatherTempAvgHour_Text, WeatherTempAvgHour, errmsg);
             db.Update_HistoryValue<double>(RainSumHour_Text, RainHourAccum, errmsg);
@@ -2913,7 +2632,7 @@ void ControlGreenhouseSlowTimer()
                 mystr = mystr + ", " + to_string(Rain24h[a]);
             };
             cout << mystr << endl;
-            AppendDataToFile();
+            //AppendDataToFile();
             cout << "TempStat timeskift ved time " << getHour(nu) << " Gennemsnit " << endl;
             double RainSum = 0;
             cout << "Opdaterer regnsummer" << endl;
@@ -2951,13 +2670,9 @@ void ControlGreenhouseSlowTimer()
     {
         //Beregner aktuelt ønsket sætpunkt for temperaturen
 
-        cout << "Automatisk kontrol \n";
-
-        cout << "Setpoint day " << Setpoint_TemperatureDay << "\n";
-        cout << "Setpoint nat " << Setpoint_TemperatureNight << "\n";
-        cout << "Setpoint komfort " << Setpoint_UdluftningTemperatureComfort<< "\n";
-        cout << "Væksthus temperatur " << Greenhouse_temperature << "\n";
+        spdlog::info("Automatisk varmestyring:  Time {}   DayStart {}   NatStart {}", getHour(nu), DayStartHour, NightStartHour);
         Setpoint_TemperatureNow = 10;
+
         if (getHour(nu) >= DayStartHour && getHour(nu) <= NightStartHour)
         {
             Setpoint_TemperatureNow = Setpoint_TemperatureDay;
@@ -2970,11 +2685,13 @@ void ControlGreenhouseSlowTimer()
     else
     {
         {
+            spdlog::info("Manuel opvarmning sættes efter dag sætpunkt");
             Setpoint_TemperatureNow = Setpoint_TemperatureDay;
         }
     }
 
-    Setpoint_TemperatureNow = 8;
+    spdlog::info("Setpoint_TemperatureNow {}", Setpoint_TemperatureNow);
+    //Setpoint_TemperatureNow = 8;
 
 
     Error_HeatUp = Error_HeatUp + (Setpoint_TemperatureNow-Greenhouse_temperature);
@@ -2994,12 +2711,11 @@ void ControlGreenhouseSlowTimer()
     {
         // AddHeatTime = int((Setpoint_TemperatureNow-Greenhouse_temperature)*P_HeatUp + I_HeatUp/100*Error_HeatUp);
         AddHeatTime = int(LagTime_HeatUp + (Setpoint_TemperatureNow-Greenhouse_temperature)*P_HeatUp);
-        spdlog::info("Tid for opvarmning bestemmes. AddHeatTime: {} ", AddHeatTime);
         StopHeating =  nu  + AddHeatTime;
-        spdlog::info("Temperatur mindre end sætpunkt. Varme tændes  Temperatur  {}  setpoint_now {} Stop tidspunkt {:%H:%M:%S}",
-                     Greenhouse_temperature, Setpoint_TemperatureNow, fmt::localtime(StopHeating));
+        spdlog::info("Temperatur mindre end sætpunkt. Varme tændes  Temperatur: {} setpoint_now: {} AddHeatTime: {} Stop tidspunkt {:%H:%M:%S}",
+                     Greenhouse_temperature, Setpoint_TemperatureNow, AddHeatTime, fmt::localtime(StopHeating));
     };
-    if (Greenhouse_temperature >= Setpoint_TemperatureNow &&  HeatOn == 1)
+    if (Greenhouse_temperature >= Setpoint_TemperatureNow &&  Status_HeatOn == 1)
     {
         StopHeating = 0;
         spdlog::info("Temperatur større end sætpunkt. Varme slukkes  Temperatur  {}  setpoint_now {} ",Greenhouse_temperature, Setpoint_TemperatureNow);
@@ -3070,9 +2786,9 @@ void ControlGreenhouseSlowTimer()
 
     cout << "Væksthus gennemsnits temperatur " << GreenhouseTempAvgDay << endl;
 
-    tm*StartVanding2 = localtime(&nu);
+    /*tm*StartVanding2 = localtime(&nu);
     StartVanding2->tm_hour = getHour(Status_VandingStartTime2);
-
+*/
     /*
     Status_LastStartTime1 sættes når en vanding kan gennemføres pga tid.
     Vanding vil kun ske når Status_VandingsTidValve1 > 0
@@ -3081,7 +2797,7 @@ void ControlGreenhouseSlowTimer()
     gået mere end 2 timer før den samme vandingstid kan startes igen. Sikre at der ikke vandes flere gange
     indenfor den samme time.
     */
-
+/*
     if (getHour(nu) == Status_VandingStartTime1 || getHour(nu) == Status_VandingStartTime2)
     {
         //spdlog::info("Vanding 1 bestemmes Hour: {} NU = {}, LastStartTime1 = {}, Difference = {} ", getHour(nu), nu , Status_LastStartTime1, nu - Status_LastStartTime1);
@@ -3099,14 +2815,15 @@ void ControlGreenhouseSlowTimer()
         spdlog::info("Vanding 1.2 bestemmes NU = {}, LastStartTime2 = {}, Difference = {} ", nu, Status_LastStartTime2, nu - Status_LastStartTime2);
         Vanding(2);  //Timer2
     }
+*/
 
     //Tænder for pumpen hvis en af ventilerne er åbne eller knap for havevanding er benyttet
 
     Status_WaterPump = 0;
 
-    if (Status_WaterValve1 == 1 or Status_WaterValve2 == 1 or Status_WaterValve3 == 1 or Status_WaterValve4 == 1)
+    if (myWaterValves[0].statusOn == 1 or myWaterValves[1].statusOn == 1 or myWaterValves[2].statusOn == 1 or myWaterValves[3].statusOn == 1 or myWaterValves[4].statusOn == 1)
     {
-        spdlog::info("Pumpe tændes for status_WaterValve 1: {}  2: {}   3: {}  4: {}", Status_WaterValve1, Status_WaterValve2, Status_WaterValve3, Status_WaterValve4);
+        spdlog::info("Pumpe tændes for status_WaterValve 1: {}  2: {}   3: {}  4: {} 5: {}", myWaterValves[0].statusOn, myWaterValves[1].statusOn, myWaterValves[2].statusOn, myWaterValves[3].statusOn, myWaterValves[4].statusOn);
         Status_WaterPump = 1;
     }
 
@@ -3144,6 +2861,7 @@ void ControlGreenhouseSlowTimer()
     //cout << "Lysniveau " << LightValue << "\n";
 
     // Rain get start state
+
     double RainRead =  GetRain();
     RainDayStats.AddData(RainRead);
     RainHourStats.AddData(RainRead);
@@ -3207,7 +2925,7 @@ void ControlGreenhouseSlowTimer()
     //cout << "3 Status_FreshWaterToTankValve " << Status_FreshWaterToTankValve << endl;
 
 
-    //SetHeat(Status_HeatUp);
+    //SetHeat(Status_HeatOn);
     if (!WinterTent)
     {
         SetLight(Status_LightGreenhouse);
@@ -3282,6 +3000,7 @@ bool CheckIOPortError(void)
 
 void WriteStatusInfo()
 {
+
     //spdlog::info("GreenhouseTempAvgDay {:.1f}", TempAvgDay);
     //spdlog::info("WeatherAvgDay {:.1f}", WeatherTempAvgDay);
     if (AddExtraWaterTime_Greenhouse > 1)
@@ -3295,7 +3014,7 @@ void WriteStatusInfo()
 
     spdlog::info("Temperature4Vent {} Setpoint_Udluftning {} ",Temperature4Vent, Setpoint_Udluftning);
 
-    spdlog::info("Status_VandingStartTime1: {}, Status_VandingStartTime2: {}", Status_VandingStartTime1, Status_VandingStartTime2);
+    spdlog::info("Status_VandingStartTime1: {:%H:%M}, Status_VandingStartTime2: {:%H:%M}", fmt::localtime(Status_VandingStartTime1), fmt::localtime(Status_VandingStartTime2));
 
 }
 
@@ -3314,7 +3033,9 @@ void FastTimerEvent()
 void SlowTimerEvent()
 {
     nu = time(NULL);
-    spdlog::info("SlowTimerEvent {:%H:%M:%S}", fmt::localtime(nu));
+    //spdlog::info("SlowTimerEvent {:%H:%M:%S}", fmt::localtime(nu));
+    spdlog::info("SlowTimerEvent - Status på relæer! HeatOn: {}, Light/Ventilation: {}, WaterToTank: {}, WaterValve1: {}, WaterValve2: {}, WaterValve3: {}, WaterValve4: {}, WaterValve5: {}",
+                 Status_HeatOn, Status_LightGreenhouse,Status_FreshWaterToTankValve, myWaterValves[0].statusOn, myWaterValves[1].statusOn, myWaterValves[2].statusOn, myWaterValves[3].statusOn, myWaterValves[4].statusOn);
 
     //CheckBlynk();
     ControlGreenhouseSlowTimer();
@@ -3327,7 +3048,7 @@ void SlowTimerEvent()
         // StopVentsButtonAc = 0;
         //
         //DispButtonActive = 0;
-        HeatOn = 0;
+        Status_HeatOn = 0;
         StopHeating = 0;
         AfterOrangeriSetup= 1;
     }
@@ -3340,7 +3061,15 @@ void VerySlowTimerEvent()
     nu = time(NULL);
     spdlog::info("VerySlowTimerEvent {:%H:%M:%S}", fmt::localtime(nu));
     ControlGreenhouseVerySlowTimer();
-
+    //Med timer
+    uint32_t rain = io.getAndResetPulseCount(Rain_Gauge_Pin);
+    uint32_t flow1 = io.getAndResetPulseCount(WaterFlow1_PIN);
+    uint32_t flow2 = io.getAndResetPulseCount(WaterFlow2_PIN);
+    uint32_t flow3 = io.getAndResetPulseCount(WaterFlow3_PIN);
+    rainPulseCount = rainPulseCount + rain;
+    pulseCountFlow1 = pulseCountFlow1 + flow1;
+    pulseCountFlow2 = pulseCountFlow2 + flow2;
+    pulseCountFlow3 = pulseCountFlow3 + flow3;
 }
 
 
@@ -3375,7 +3104,7 @@ void OrangeriSetup(void)
 
     set_mode(pi, WaterLevelPin1, PI_INPUT);
 
-    set_mode(pi, WaterFlow1_PIN, PI_INPUT);
+   /* set_mode(pi, WaterFlow1_PIN, PI_INPUT);
     set_pull_up_down(pi, WaterFlow1_PIN, PI_PUD_DOWN); // Enable pull-down resistor
 
     set_mode(pi, WaterFlow2_PIN, PI_INPUT);
@@ -3387,7 +3116,7 @@ void OrangeriSetup(void)
     set_mode(pi, RAIN_GAUGE_PIN, PI_INPUT);
     set_pull_up_down(pi, RAIN_GAUGE_PIN, PI_PUD_DOWN); // Enable pull-up resistor
     //gpioGlitchFilter(pi, RAIN_GAUGE_PIN, 300000);
-
+*/
 
 
     //Interrupt porte benytter standard porte på GPIO proten og ikke på ExpanderPi
@@ -3417,18 +3146,21 @@ void OrangeriSetup(void)
         gpioSetAlertFunc(RAIN_GAUGE_PIN, countRainPulse);
     */
 
+    /*
+    12-03-2026
     callback(pi, WaterFlow1_PIN, EITHER_EDGE, pulseCallbackFlow1);
     callback(pi, WaterFlow2_PIN, EITHER_EDGE, pulseCallbackFlow2);
     callback(pi, WaterFlow3_PIN, EITHER_EDGE, pulseCallbackFlow3);
     callback(pi, RAIN_GAUGE_PIN, EITHER_EDGE, countRainPulse);
-
+    */
 
     //InitBME680();  //Init BME680 sensor
 
     set_mode(pi, LedPin, PI_OUTPUT);
-    set_mode (pi, GPIO_LED_WaterPump, PI_OUTPUT);
+    /*set_mode (pi, GPIO_LED_WaterPump, PI_OUTPUT);
     set_mode (pi, GPIO_LED_StopVent, PI_OUTPUT);
-    set_mode (pi, GPIO_LED_Disp, PI_OUTPUT) ;
+    set_mode (pi, GPIO_LED_Disp, PI_OUTPUT) ;*/
+
     gpio_write(pi, GPIO_LED_WaterPump, 0);
     gpio_write(pi, GPIO_LED_StopVent, 0);
     gpio_write(pi, GPIO_LED_Disp, 0);
@@ -3628,109 +3360,156 @@ int main(int argc, char* argv[])
     auto lastExecutionFastTimer        = std::chrono::steady_clock::now();
 
     // Configure GPIOs
-    int buttons[] = {GPIO_Button_WaterPump, GPIO_Button_StopVent, GPIO_Button_Disp};
-
-    for(int i = 0; i < 3; i++)
-    {
-        set_mode(pi, buttons[i], PI_INPUT);
-        set_pull_up_down(pi, buttons[i], PI_PUD_UP);
-        // debounce
-        set_glitch_filter(pi, buttons[i], 5000);
-        try
+    //int buttons[] = {GPIO_Button_WaterPump, GPIO_Button_StopVent, GPIO_Button_Disp};
+    /*
+        for(int pin : buttons)
         {
-            callback(pi, buttons[i], EITHER_EDGE, buttonISR);
+            set_mode(pi, pin, PI_INPUT);
+            set_pull_up_down(pi, pin, PI_PUD_UP);
+            // debounce
+            set_glitch_filter(pi, pin, 5000);
+            try
+            {
+                //callback(pi, buttons[i], EITHER_EDGE, buttonISR);
+                int cb_id = callback(pi, pin, FALLING_EDGE, buttonISR);
+                spdlog::info("Callback registered on GPIO pin {} is {}", pin, cb_id);
+            }
+            catch(...)
+            {
+                spdlog::error("Failed to register callback on GPIO {}", pin);
+            }
         }
-        catch(...)
-        {
-            spdlog::error("Failed to register callback on GPIO {}", buttons[i]);
-        }
-
-        spdlog::info("GPIO configured");
-        spdlog::info("Entering main loop");
-
-        /*
-        while(running.load())
-        {
-            auto now = std::chrono::steady_clock::now();
-
-            // Check if it's time to execute function A
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastExecutionVerySlowTimer).count() >= intervalVerySlowTimer)
-            {
-                VerySlowTimerEvent();
-                lastExecutionVerySlowTimer = now; // Update the last execution time
-                //spdlog::info("VerySlowTimer Event");
-            }
-
-            // Check if it's time to execute function B
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastExecutionSlowTimer).count() >= intervalSlowTimer)
-            {
-                SlowTimerEvent();
-                lastExecutionSlowTimer = now; // Update the last execution time
-            }
-
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastExecutionFastTimer).count() >= intervalFastTimer)
-            {
-                FastTimerEvent();
-                lastExecutionFastTimer = now; // Update the last execution time
-            }
 
 
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastExecutionWriteStatusTimer).count() >= intervalWriteStatusTimer)
-            {
-                WriteStatusInfo();
-                lastExecutionWriteStatusTimer = now; // Update the last execution time
-            }
-
-            // Sleep for a short duration to prevent busy waiting
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
         */
-        while (running.load())
+
+
+    io = ButtonDriver(pi);//reinitialiser
+    io.addButton(GPIO_Button_WaterPump);
+    io.addButton(GPIO_Button_StopVent);
+    io.addButton(GPIO_Button_Disp);
+
+    io.addPulseCounter(Rain_Gauge_Pin);
+    io.addPulseCounter(WaterFlow1_PIN);
+    io.addPulseCounter(WaterFlow2_PIN);
+    io.addPulseCounter(WaterFlow3_PIN);
+
+    io.init();
+
+    spdlog::info("GPIO configured");
+    spdlog::info("Entering main loop");
+    string errmsg;
+    db.AddEventRecord("Opstart program", "Program startet",0,errmsg);
+
+    while (running.load())
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        if (now - lastExecutionVerySlowTimer >= intervalVerySlowTimer)
         {
-            auto now = std::chrono::steady_clock::now();
-
-            if (now - lastExecutionVerySlowTimer >= intervalVerySlowTimer)
-            {
-                VerySlowTimerEvent();
-                lastExecutionVerySlowTimer = now;
-            }
-
-            if (now - lastExecutionSlowTimer >= intervalSlowTimer)
-            {
-                SlowTimerEvent();
-                lastExecutionSlowTimer = now;
-            }
-
-            if (now - lastExecutionFastTimer >= intervalFastTimer)
-            {
-                FastTimerEvent();
-                lastExecutionFastTimer = now;
-            }
-
-            if (now - lastExecutionWriteStatusTimer >= intervalWriteStatusTimer)
-            {
-                WriteStatusInfo();
-                lastExecutionWriteStatusTimer = now;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            VerySlowTimerEvent();
+            lastExecutionVerySlowTimer = now;
         }
 
-        spdlog::info("Shutdown requested");
-
-        //gpioTerminate(); // Always clean up
-        spdlog::default_logger()->flush();  // Force immediate flush
-
-        // Cleanup pigpio
-        if (pi >=0)
+        if (now - lastExecutionSlowTimer >= intervalSlowTimer)
         {
-            pigpio_stop(pi);
+            SlowTimerEvent();
+            lastExecutionSlowTimer = now;
         }
-        spdlog::shutdown();
 
-        return 0;
+        if (now - lastExecutionFastTimer >= intervalFastTimer)
+        {
+            FastTimerEvent();
+            lastExecutionFastTimer = now;
+        }
+
+        if (now - lastExecutionWriteStatusTimer >= intervalWriteStatusTimer)
+        {
+            WriteStatusInfo();
+            lastExecutionWriteStatusTimer = now;
+        }
+
+
+        ButtonEvent ev;
+        string errmsg;
+        while(io.getEvent(ev))
+        {
+
+            if(ev.level == 0)
+            {
+
+                spdlog::info("Button Presssed gpio= {} level= {}", ev.gpio,ev.level);
+                switch (ev.gpio)
+                {
+                case GPIO_Button_WaterPump:
+                    spdlog::info("WaterPump pressed");
+                    gpio_write(pi, GPIO_LED_WaterPump,1);
+                    ExPi_IOPortWrite(Pi_Relay_WaterPump, 1);
+                    db.Update_CurrentValue<string>("WaterPump","On",errmsg);
+                    WaterPumpButtonAtTime = time(NULL)+ waterPumpButton_Minutes *60;
+                    spdlog::info("WaterPump On until {:%H:%M:%S}", fmt::localtime(WaterPumpButtonAtTime));
+                    WaterPumpButtonActive = 1; //Angiver at StopVentButten er aktiv
+                    break;
+
+                case GPIO_Button_StopVent:
+                    spdlog::info("StopVent pressed");
+                    gpio_write(pi, GPIO_LED_StopVent, 1);
+                    CurrentStatus_Window1 = 100;  //Vinduer tvinges helt ned
+                    NewStatus_Window1 = 0;
+                    CurrentStatus_Window2 = 100;
+                    NewStatus_Window2 = 0;
+                    CurrentStatus_Window3 = 100;
+                    NewStatus_Window3 = 0;
+                    CurrentStatus_Window4 = 100;
+                    NewStatus_Window4 = 0;
+                    ControlWindows;
+                    StopVentButtonAtTime = time(NULL)+ StopVentsButton_minutes*60; //Deaktiverer automatiske vinduere indtil tid
+                    StopVentButtonActive = 1; //Angiver at StopVentButten er aktiv
+                    spdlog::info("Stop vinduer knap aktiv indtil {:%H:%M:%S}", fmt::localtime(StopVentButtonAtTime));
+                    break;
+                case GPIO_Button_Disp:
+                    spdlog::info("Disp pressed");
+                    gpio_write(pi, GPIO_LED_Disp,1);
+                    spdlog::info("Disp button knap: on");
+                    break;
+
+                }
+            }
+            else
+            {
+                spdlog::info("Button Released gpio= {} level= {}", ev.gpio, ev.level);
+                switch (ev.gpio)
+                {
+                case GPIO_Button_WaterPump:
+                    spdlog::info("WaterPump released");
+                case GPIO_Button_StopVent:
+                    spdlog::info("StopVent released");
+                case GPIO_Button_Disp:
+                    spdlog::info("Disp released");
+                }
+            }
+        }
+
+
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
+    spdlog::info("Shutdown requested");
 
+    //gpioTerminate(); // Always clean up
+    spdlog::default_logger()->flush();  // Force immediate flush
 
+    // Cleanup pigpio
+    if (pi >=0)
+    {
+        pigpio_stop(pi);
+    }
+    // spdlog::shutdown();
+    teardownLogger();
+    return 0;
 }
+
+
+
+

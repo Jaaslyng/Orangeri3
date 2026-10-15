@@ -59,13 +59,14 @@ public:
 
         std::string sqlValue = toSqlValue(value);
         std::string sqlParam = "'" + parameter + "'";
-
+        spdlog::debug("sqlParam: {} sqlValue: {}", sqlParam, sqlValue);
         std::string query =
-            "INSERT INTO CurrentValues (Parameter, Value) VALUES (" + sqlParam + ", " + sqlValue + ") "
-            "ON DUPLICATE KEY UPDATE Value = " + sqlValue;
+          //  "INSERT INTO CurrentValues (Parameter, Value) VALUES (" + sqlParam + ", " + sqlValue + ") "
+            "INSERT INTO CurrentValues (Parameter, Value) VALUES (" + sqlParam + "," + sqlValue + ") "
+            "ON DUPLICATE KEY UPDATE Value = VALUES(Value)";
 
-        spdlog::debug("Executing query: {} Parameter: {} Value: {}", query, sqlParam, sqlValue);
-
+        spdlog::debug("Executing query 1: {}", query);
+        spdlog::debug("Executing query 2: {}", query.c_str());
         if (mysql_query(conn, query.c_str()))
         {
             sqlError = mysql_error(conn);
@@ -93,6 +94,37 @@ public:
         std::string query =
             "INSERT INTO HistoryValues (Time, Parameter, Value) "
             "VALUES (" + sqlTime + ", " + sqlParam + ", " + sqlValue + ");";
+
+        spdlog::debug("Executing query: {}", query);
+
+        if (mysql_query(conn, query.c_str()))
+        {
+            sqlError = mysql_error(conn);
+            spdlog::error("SQL Error Executing query: {}", query);
+            spdlog::error("SQL Error: {}", sqlError);
+            return false;
+        }
+
+        return true;
+    }
+
+ template<typename T>
+ bool AddEventRecord(const std::string& type,
+                     const std::string& description,
+                     const T& value,
+                      std::string& sqlError)
+    {
+        static_assert(is_supported_type<T>::value,
+                      "Update_Event only supports int, float, double, and std::string");
+
+        std::string sqlValue = toSqlValue(value);
+        std::string sqlType = "'" + type + "'";
+        std::string sqlDesc = "'" + description + "'";
+        std::string sqlTime  = "'" + getCurrentTime() + "'";
+
+        std::string query =
+            "INSERT INTO Events (Date, Time, Type, Description, Value) "
+            "VALUES (" + sqlTime + ", " + sqlTime + ", " + sqlType + ", " + sqlDesc + ", " +sqlValue + ");";
 
         spdlog::debug("Executing query: {}", query);
 
