@@ -1,0 +1,55 @@
+[2026-10-20 13:21:20] [debug] FAST: efter ControlGreenhouseFastTimer
+[2026-10-20 13:21:20] [debug] FAST: før UpdateBlynkAfterFastTimer
+[2026-10-20 13:21:20] [debug] sqlParam: 'LastRunTime' sqlValue: '26-10-20 13:21'
+[2026-10-20 13:21:20] [debug] Executing query 1: INSERT INTO CurrentValues (Parameter, Value) VALUES ('LastRunTime','26-10-20 13:21') ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 13:21:20] [debug] Executing query 2: INSERT INTO CurrentValues (Parameter, Value) VALUES ('LastRunTime','26-10-20 13:21') ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 13:21:20] [debug] FAST: efter UpdateBlynkAfterFastTimer
+[2026-10-20 13:21:35] [info] START: FastTimerEvent
+[2026-10-20 13:21:35] [debug] FAST: før ControlGreenhouseFastTimer
+[2026-10-20 13:21:35] [debug] FAST: Before CheckWatering
+[2026-10-20 13:21:35] [debug] FAST: After CheckWatering
+[2026-10-20 13:21:35] [debug] AutoWindow true StopVentsButtonActive false 
+[2026-10-20 13:21:35] [debug] Vanding status 0:false
+[2026-10-20 13:21:35] [debug] Vanding status 1:false
+[2026-10-20 13:21:35] [debug] Vanding status 2:false
+[2026-10-20 13:21:35] [debug] Vanding status 3:false
+[2026-10-20 13:21:35] [debug] Vanding status 4:false
+[2026-10-20 13:21:35] [debug] FAST: Before ControlWindows
+[2026-10-20 13:21:35] [debug] ControlMotor 1
+[2026-10-20 13:21:35] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 13:21:35] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 13:21:35] [debug] ControlMotor 3  MotorNumber 1
+[2026-10-20 13:21:35] [debug] ControlMotor Slut
+[2026-10-20 13:21:35] [debug] ControlMotor 2
+[2026-10-20 13:21:35] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 13:21:35] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 13:21:35] [debug] ControlMotor 3  MotorNumber 2
+[2026-10-20 13:21:35] [debug] ControlMotor Slut
+[2026-10-20 13:21:35] [debug] ControlMotor 3
+[2026-10-20 13:21:35] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 13:21:35] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 13:21:35] [debug] ControlMotor 3  MotorNumber 3
+[2026-10-20 13:21:35] [debug] ControlMotor Slut
+[2026-10-20 13:21:35] [debug] ControlMotor 4
+[2026-10-20 13:21:35] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 13:21:35] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 13:21:35] [debug] ControlMotor 3  MotorNumber 4
+[2026-10-20 13:21:35] [debug] ControlMotor Slut
+[2026-10-20 13:21:35] [debug] FAST: After ControlWindows
+[2026-10-20 13:21:35] [debug] FAST: Before SetWaterPump
+[2026-10-20 13:21:35] [debug] FAST: After SetWaterPump
+[2026-10-20 13:21:35] [debug] FAST: Before SetFreshWatertoTank
+[2026-10-20 13:21:35] [debug] FAST: After SetFreshWatertoTank
+[2026-10-20 13:21:35] [debug] FAST: efter ControlGreenhouseFastTimer
+[2026-10-20 13:21:35] [debug] FAST: før UpdateBlynkAfterFastTimer
+[2026-10-20 13:21:35] [debug] sqlParam: 'LastRunTime' sqlValue: '26-10-20 13:21'
+[2026-10-20 13:21:35] [debug] Executing query 1: INSERT INTO CurrentValues (Parameter, Value) VALUES ('LastRunTime','26-10-20 13:21') ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 13:21:35] [debug] Executing query 2: INSERT INTO CurrentValues (Parameter, Value) VALUES ('LastRunTime','26-10-20 13:21') ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 13:21:35] [debug] FAST: efter UpdateBlynkAfterFastTimer
+[2026-10-20 13:21:40] [info] START: SlowTimerEvent
+[2026-10-20 13:21:40] [debug] SLOW: start SlowTimerEvent
+[2026-10-20 13:21:40] [info] SlowTimerEvent - Status på relæer! HeatOn: 0, Light/Ventilation: 0, WaterToTank: 0, WaterValve1: false, WaterValve2: false, WaterValve3: false, WaterValve4: false, WaterValve5: false
+[2026-10-20 13:21:40] [info] VinterTent true Greenhouse_temperature 11.5 Extra1_temperature 12
+[2026-10-20 13:21:40] [debug] SLOW: før ControlGreenhouseSlowTimer
+[2026-10-20 13:21:40] [debug] Executing query: SELECT SetpointValue FROM Setpoints WHERE Parameter = 'VandingsKontrol'
+[2026-10-20 13:21:40] [debug] Executing que

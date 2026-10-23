@@ -32,7 +32,7 @@ public:
     bool IniSqlConnection(std::string& sqlError);
     void CloseSqlConnection();
     void finish_with_error(MYSQL* conn);
-
+    bool TestConnection();
 
     template<typename T>
     std::string toSqlValue(const T& value)

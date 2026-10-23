@@ -32,6 +32,8 @@ std::string Database::getCurrentTime()
     return std::string(buf);
 }
 
+
+/*
 // Initialize SQL Connection
 bool Database::IniSqlConnection(std::string& sqlError)
 {
@@ -43,6 +45,16 @@ bool Database::IniSqlConnection(std::string& sqlError)
         return false;
     }
 
+
+    //Indsat ved fejlsøgning 26-10-16
+    unsigned int timeout = 5;
+
+    mysql_options(conn, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+    mysql_options(conn, MYSQL_OPT_READ_TIMEOUT, &timeout);
+    mysql_options(conn, MYSQL_OPT_WRITE_TIMEOUT, &timeout);
+    //Indsat ved fejlsøgning 26-10-16
+
+
     if (mysql_real_connect(conn, server, user, password, database, 0, nullptr, 0) == nullptr)
     {
         sqlError = mysql_error(conn);
@@ -51,6 +63,65 @@ bool Database::IniSqlConnection(std::string& sqlError)
         return false;
     }
 
+    return true;
+}
+
+*/
+
+bool Database::TestConnection()
+{
+
+  if (mysql_ping(conn) != 0)
+{
+    spdlog::warn("Lost MySQL connection, reconnecting");
+
+    mysql_close(conn);
+    conn = mysql_init(nullptr);
+
+    if (!mysql_real_connect(conn, server, user, password,
+                            database, 0, nullptr, 0))
+    {
+        spdlog::error("Reconnect failed: {}", mysql_error(conn));
+        return false;
+    }
+}
+
+
+}
+
+
+bool Database::IniSqlConnection(std::string& sqlError)
+{
+    conn = mysql_init(nullptr);
+
+    if (conn == nullptr)
+    {
+        sqlError = "mysql_init() failed";
+        return false;
+    }
+
+    unsigned int timeout = 5;
+
+    if (mysql_options(conn, MYSQL_OPT_CONNECT_TIMEOUT, &timeout) != 0 ||
+        mysql_options(conn, MYSQL_OPT_READ_TIMEOUT, &timeout) != 0 ||
+        mysql_options(conn, MYSQL_OPT_WRITE_TIMEOUT, &timeout) != 0)
+    {
+        sqlError = mysql_error(conn);
+        mysql_close(conn);
+        conn = nullptr;
+        return false;
+    }
+
+    if (mysql_real_connect(conn, server, user, password,
+                           database, 0, nullptr, 0) == nullptr)
+    {
+        sqlError = mysql_error(conn);
+        mysql_close(conn);
+        conn = nullptr;
+        return false;
+    }
+
+    spdlog::info("Database connection established");
     return true;
 }
 

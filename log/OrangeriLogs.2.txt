@@ -1,0 +1,61 @@
+[2026-10-20 14:02:16] [debug] Executing query 1: INSERT INTO CurrentValues (Parameter, Value) VALUES ('Rain24h',0.000000) ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 14:02:16] [debug] Executing query 2: INSERT INTO CurrentValues (Parameter, Value) VALUES ('Rain24h',0.000000) ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 14:02:16] [debug] SLOW: efter UpdateBlynkAfterSlowTimer
+[2026-10-20 14:02:16] [debug] SLOW: slut SlowTimerEvent
+[2026-10-20 14:02:27] [info] START: FastTimerEvent
+[2026-10-20 14:02:27] [debug] FAST: før ControlGreenhouseFastTimer
+[2026-10-20 14:02:27] [debug] FAST: Before CheckWatering
+[2026-10-20 14:02:27] [debug] FAST: After CheckWatering
+[2026-10-20 14:02:27] [debug] AutoWindow true StopVentsButtonActive false 
+[2026-10-20 14:02:27] [debug] Vanding status 0:false
+[2026-10-20 14:02:27] [debug] Vanding status 1:false
+[2026-10-20 14:02:27] [debug] Vanding status 2:false
+[2026-10-20 14:02:27] [debug] Vanding status 3:false
+[2026-10-20 14:02:27] [debug] Vanding status 4:false
+[2026-10-20 14:02:27] [debug] FAST: Before ControlWindows
+[2026-10-20 14:02:27] [debug] ControlMotor 1
+[2026-10-20 14:02:27] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 14:02:27] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 14:02:27] [debug] ControlMotor 3  MotorNumber 1
+[2026-10-20 14:02:27] [debug] ControlMotor Slut
+[2026-10-20 14:02:27] [debug] ControlMotor 2
+[2026-10-20 14:02:27] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 14:02:27] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 14:02:27] [debug] ControlMotor 3  MotorNumber 2
+[2026-10-20 14:02:27] [debug] ControlMotor Slut
+[2026-10-20 14:02:27] [debug] ControlMotor 3
+[2026-10-20 14:02:27] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 14:02:27] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 14:02:27] [debug] ControlMotor 3  MotorNumber 3
+[2026-10-20 14:02:27] [debug] ControlMotor Slut
+[2026-10-20 14:02:27] [debug] ControlMotor 4
+[2026-10-20 14:02:27] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 14:02:27] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[2026-10-20 14:02:27] [debug] ControlMotor 3  MotorNumber 4
+[2026-10-20 14:02:27] [debug] ControlMotor Slut
+[2026-10-20 14:02:27] [debug] FAST: After ControlWindows
+[2026-10-20 14:02:27] [debug] FAST: Before SetWaterPump
+[2026-10-20 14:02:27] [debug] FAST: After SetWaterPump
+[2026-10-20 14:02:27] [debug] FAST: Before SetFreshWatertoTank
+[2026-10-20 14:02:27] [debug] FAST: After SetFreshWatertoTank
+[2026-10-20 14:02:27] [debug] FAST: efter ControlGreenhouseFastTimer
+[2026-10-20 14:02:27] [debug] FAST: før UpdateBlynkAfterFastTimer
+[2026-10-20 14:02:27] [debug] sqlParam: 'LastRunTime' sqlValue: '26-10-20 14:02'
+[2026-10-20 14:02:27] [debug] Executing query 1: INSERT INTO CurrentValues (Parameter, Value) VALUES ('LastRunTime','26-10-20 14:02') ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 14:02:27] [debug] Executing query 2: INSERT INTO CurrentValues (Parameter, Value) VALUES ('LastRunTime','26-10-20 14:02') ON DUPLICATE KEY UPDATE Value = VALUES(Value)
+[2026-10-20 14:02:27] [debug] FAST: efter UpdateBlynkAfterFastTimer
+[2026-10-20 14:02:42] [info] START: FastTimerEvent
+[2026-10-20 14:02:42] [debug] FAST: før ControlGreenhouseFastTimer
+[2026-10-20 14:02:42] [debug] FAST: Before CheckWatering
+[2026-10-20 14:02:42] [debug] FAST: After CheckWatering
+[2026-10-20 14:02:42] [debug] AutoWindow true StopVentsButtonActive false 
+[2026-10-20 14:02:42] [debug] Vanding status 0:false
+[2026-10-20 14:02:42] [debug] Vanding status 1:false
+[2026-10-20 14:02:42] [debug] Vanding status 2:false
+[2026-10-20 14:02:42] [debug] Vanding status 3:false
+[2026-10-20 14:02:42] [debug] Vanding status 4:false
+[2026-10-20 14:02:42] [debug] FAST: Before ControlWindows
+[2026-10-20 14:02:42] [debug] ControlMotor 1
+[2026-10-20 14:02:42] [debug] ControlMotor 1  CurrentStatus 0  newStatus 0
+[2026-10-20 14:02:42] [debug] ControlMotor 2  stopmotor 1792488125  moving false
+[

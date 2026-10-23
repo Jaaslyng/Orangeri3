@@ -18,6 +18,7 @@ OPdateret
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <ButtonDriver.h>
 #include <fmt/chrono.h>
 #include <ctime>
@@ -27,6 +28,8 @@ OPdateret
 #include <csignal>     //Handling Terminal Closure
 #include <iostream>
 #include <fstream>
+#include <ctime>
+#include <iomanip>
 #include <stdio.h>
 #include <stdlib.h>
 #include <myXML.h>
@@ -47,16 +50,72 @@ using namespace std;
 
 static std::shared_ptr<spdlog::logger> logger;
 
+
+
+#include <chrono>
+
+template <typename Func>
+void timedCall(const char* name, Func func)
+{
+    const auto start = std::chrono::steady_clock::now();
+
+    spdlog::info("START: {}", name);
+
+    try
+    {
+        func();
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::error("EXCEPTION in {}: {}", name, e.what());
+        throw;
+    }
+    catch (...)
+    {
+        spdlog::error("UNKNOWN EXCEPTION in {}", name);
+        throw;
+    }
+
+    const auto elapsed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start).count();
+
+    if (elapsed > 2000)
+    {
+        spdlog::warn("{} took {} ms", name, elapsed);
+    }
+}
+
+
 // Kald én gang tidligt i programmet
 void setupLogger()
 {
     try
     {
+        std::cout << "setupLogger CALLED!" << std::endl;
+
         // Error handler for at fange spdlog-fejl (IO, flush osv.)
+
         spdlog::set_error_handler([](const std::string &msg)
         {
-            std::cerr << "spdlog error: " << msg << std::endl;
-        });
+            std::cerr << "SPDLOG ERROR: " << msg << std::endl;
+
+            auto now = std::time(nullptr);
+
+            std::ofstream f("/tmp/spdlog_error.txt", std::ios::app);
+
+            if (f)
+                {
+                    f << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
+                      << " : " << msg << std::endl;
+                }
+            });
+
+            // Test at vi kan skrive filen
+            {
+                std::ofstream test("/tmp/spdlog_error.txt", std::ios::app);
+                test << "Logger startup test" << std::endl;
+            }
 
         // Init thread pool til async logging (queue size, nr threads)
         // Vælg queue size efter forventet log-load (f.eks. 8192) og 1 baggrundstråd
@@ -64,20 +123,24 @@ void setupLogger()
 
         // Rotating sink: 2 MB max, 3 filer
         const std::string log_path = "/home/jesper/Documents/Orangeri3/Orangeri/log/OrangeriLogs.txt";
-        auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_path, 2 * 1024 * 1024, 3);
+        //auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_path, 2 * 1024 * 1024, 3);
+        //ikke rotation for test
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_path,true);
 
         // (Valgfrit) også log til console
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         console_sink->set_level(spdlog::level::info);
 
-        std::vector<spdlog::sink_ptr> sinks{rotating_sink, console_sink};
+        //Rotation std::vector<spdlog::sink_ptr> sinks{rotating_sink, console_sink};
+        //Test uden rotation
+        std::vector<spdlog::sink_ptr> sinks{file_sink, console_sink};
 
         // Opret async logger. Brug block eller discard politik
         logger = std::make_shared<spdlog::async_logger>(
                      "file_logger",
                      sinks.begin(), sinks.end(),
                      spdlog::thread_pool(),
-                     spdlog::async_overflow_policy::block
+                     spdlog::async_overflow_policy::overrun_oldest
                  );
 
         spdlog::register_logger(logger);
@@ -86,10 +149,10 @@ void setupLogger()
         // Format og niveau
         logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
         spdlog::set_level(spdlog::level::info);
-    //spdlog::set_level(spdlog::level::debug);
+        //spdlog::set_level(spdlog::level::debug);
 
         // Periodisk flush (starter intern flush-tråd). Kan fjernes hvis ikke ønsket.
-        spdlog::flush_every(std::chrono::seconds(10));
+        //spdlog::flush_every(std::chrono::seconds(10));
 
         // (Valgfrit) flush ved errors
         logger->flush_on(spdlog::level::err);
@@ -105,6 +168,8 @@ void setupLogger()
 // Kald ved afslutning (eller før fork hvis du gen-initialiserer efter fork)
 void teardownLogger()
 {
+    std::cout << "teardownLogger CALLED!" << std::endl;
+
     if (logger)
     {
         logger->info("Logger shutting down.");
@@ -238,6 +303,12 @@ double GreenhouseTempMinDay = 20;
 double GreenhouseTempMaxDay = 20;
 //double TempAvgLastHour = 20;
 double GreenhouseTempAvgHour = 20;
+
+double Extra1TempAvgDay = 20;
+double Extra1TempMinDay = 20;
+double Extra1TempMaxDay = 20;
+
+
 //double WeatherTempAvgLastDay = 20;
 double WeatherTempAvgDay = 20;
 double WeatherTempMinDay = 20;
@@ -293,6 +364,12 @@ string RainSum24h_Parameter = "Rain24h";
 string GreenhouseTempAvgDay_Text = "GreenhouseTemperatureDaily";
 string GreenhouseTempMinDay_Text = "GreenhouseMinimumTemperatureDaily";
 string GreenhouseTempMaxDay_Text = "GreenhouseMaximumTemperatureDaily";
+
+string Extra1TempAvgDay_Text = "Extra1TemperatureDaily";
+string Extra1TempMinDay_Text = "Extra1MinimumTemperatureDaily";
+string Extra1TempMaxDay_Text = "Extra1MaximumTemperatureDaily";
+
+
 string WeatherTempAvgDay_Text = "WeatherTemperatureDaily";
 string WeatherTempMinDay_Text = "WeatherMinimumTemperatureDaily";
 string WeatherTempMaxDay_Text = "WeatherMaximumTemperatureDaily";
@@ -828,6 +905,8 @@ void ControlMotor(int MotorNumber)
     double currentstatus;
     double newstatus;
     time_t stopmotor;
+
+    spdlog::debug("ControlMotor {}", MotorNumber);
     switch (MotorNumber)
     {
     case 1:
@@ -867,6 +946,8 @@ void ControlMotor(int MotorNumber)
     nu = time(NULL);
     string msg = showDate(nu);
 
+    spdlog::debug("ControlMotor 1  CurrentStatus {}  newStatus {}", currentstatus,newstatus);
+
     if (currentstatus != newstatus)
     {
         diff = newstatus - currentstatus;
@@ -900,6 +981,7 @@ void ControlMotor(int MotorNumber)
 
         }
     }
+    spdlog::debug("ControlMotor 2  stopmotor {}  moving {}", stopmotor, moving);
 
     string errmsg;
     if (nu >= stopmotor && moving == 1)
@@ -913,9 +995,15 @@ void ControlMotor(int MotorNumber)
         moving = 0;
         currentstatus = newstatus;
         VinduesKontrol = 5; //Sætter vindues menu til 5 (=ingen ændring)
-        db.Update_Setpoint<int>(WindowControl_SetpointText,VinduesKontrol,errmsg);
+
+        spdlog::debug("ControlMotor {}: før Update_Setpoint",MotorNumber);
+
+        bool dbResult = db.Update_Setpoint<int>(WindowControl_SetpointText,VinduesKontrol,errmsg);
+
+        spdlog::debug("ControlMotor {}: efter Update_Setpoint, resultat={}, fejl={}",MotorNumber,dbResult,errmsg);
     }
 
+   spdlog::debug("ControlMotor 3  MotorNumber {}", MotorNumber);
 
     switch (MotorNumber)
     {
@@ -952,6 +1040,8 @@ void ControlMotor(int MotorNumber)
         //cout << "Afslutning på ControlWindows procedure \n";
         //cout << endl;
     }
+      spdlog::debug("ControlMotor Slut");
+
 }
 
 //Styrer vinduerne 1-3
@@ -981,6 +1071,7 @@ bool Use_WDT = false; //Angiver om Watchdog skal være aktiv i hele programmet e
 
 //Statistik variable
 MyStat GreenhouseDayTempStats;
+MyStat Extra1DayTempStats;
 MyStat WeatherDayTempStats;
 MyStat GreenhouseHourTempStats;
 MyStat WeatherHourTempStats;
@@ -1686,7 +1777,9 @@ void ControlGreenhouseFastTimer()
         //SetWaterPump(Status_WaterPump);
     }
 
+    spdlog::debug("FAST: Before CheckWatering");
     CheckWatering();
+    spdlog::debug("FAST: After CheckWatering");
 
     /*  if (DispButtonActive < nu)
       {
@@ -1701,16 +1794,9 @@ void ControlGreenhouseFastTimer()
 
 //    if (AutoWindow == 1 and StopVentsButtonActive == 0)
     spdlog::debug("AutoWindow {} StopVentsButtonActive {} ", AutoWindow, StopVentButtonActive);
-    if (AutoWindow == 1 & StopVentButtonActive == 0)  //Automatiske vinduer og ikke stop med knap
+    if (AutoWindow == 1 && StopVentButtonActive == 0)  //Automatiske vinduer og ikke stop med knap
     {
-        //cout << endl;
-        //cout << "Motor1_Moving " << Motor1_Moving << "\n";
-        //cout << "LastRunTime " << showDate(LastRunTime) << endl;
-        //cout << "WindowsChangedTime " << showDate(WindowsChangedTime) << endl;
-        //cout << "MinSecBetweenMotorMoving " << MinSecBetweenMotorMoving << endl;
-
-        spdlog::info("VinterTent {} Greenhouse_temperature {} Extra1_temperature {}", WinterTent, Greenhouse_temperature, Extra1_temperature);
-        //Det bestemmes om der åbnes viduer efter om der telt i orangeriet
+         //Det bestemmes om der åbnes viduer efter om der telt i orangeriet
         Temperature4Vent = Greenhouse_temperature;   //Som standard benyttes den almindelige orangeritemperatur til vinduesstyring
         if (WinterTent == 1)
         {
@@ -1795,45 +1881,29 @@ void ControlGreenhouseFastTimer()
     }
 
 
-/*
-    if ( nu  >= Status_StopWateringValve2 && Status_WaterValve2 == 1)
-    {
-        Status_WaterValve2 = 0;
-        string t = showDate(Status_StopWateringValve2);
-        spdlog::info("Vanding kanal 2 stoppes {}", t );
-        db.Update_CurrentValue<string>(LastWatering2_Parameter,t, errmsg);
-    }
 
-    if ( nu  >= Status_StopWateringValve3 && Status_WaterValve3 == 1)
-    {
-        Status_WaterValve3 = 0;
-        string t = showDate(Status_StopWateringValve3);
-        spdlog::info("Vanding kanal 3 stoppes {}", t );
-        db.Update_CurrentValue<string>(LastWatering3_Parameter,t, errmsg);
-    }
-
-    if ( nu  >= Status_StopWateringValve4  && Status_WaterValve4 == 1)
-    {
-        Status_WaterValve4 = 0;
-        string t = showDate(Status_StopWateringValve4);
-        spdlog::info("Vanding kanal 4 stoppes {}", t );
-        db.Update_CurrentValue<string>(LastWatering4_Parameter,t, errmsg);
-    }
-
-    */
 
 
 
     //Styrer vinduer efter behov defineret tidligere
+    spdlog::debug("FAST: Before ControlWindows");
     ControlWindows();
+    spdlog::debug("FAST: After ControlWindows");
 
+    spdlog::debug("FAST: Before SetWaterPump");
     SetWaterPump(Status_WaterPump);
+    spdlog::debug("FAST: After SetWaterPump");
 
+    spdlog::debug("FAST: Before SetFreshWatertoTank");
     SetFreshWatertoTank(Status_FreshWaterToTankValve);
+    spdlog::debug("FAST: After SetFreshWatertoTank");
 
     if (!WinterTent)
     {
-        SetLight(Status_LightGreenhouse);
+          spdlog::debug("FAST: Before SetLight");
+          SetLight(Status_LightGreenhouse);
+          spdlog::info("After: Before SetLight");
+
     }
 
     LastRunTime =  nu;  //Variable der holder styr på hornår der er kørt en styring
@@ -1868,7 +1938,9 @@ void UpdateBlynkAfterSlowTimer()
         double WeatherTempMaxDay = WeatherDayTempStats.GetMax();
         double GreenhouseTempMin = GreenhouseDayTempStats.GetMin();
         double GreenhouseTempMax = GreenhouseDayTempStats.GetMax();
-
+        double Extra1TempMin = Extra1DayTempStats.GetMin();
+        double Extra1TempMax = Extra1DayTempStats.GetMax();
+        spdlog::info("Extra1Temp   Min {}  Max {}", Extra1TempMin, Extra1TempMax);
         db.Update_CurrentValue<double>("WeatherTemp",Weather_temperature, errmsg);
         db.Update_CurrentValue<double>("WeatherAvgTemp",WeatherTempAvgDay,errmsg);
         db.Update_CurrentValue<double>("WeatherMinTemp",WeatherTempMinDay, errmsg);
@@ -1876,7 +1948,7 @@ void UpdateBlynkAfterSlowTimer()
 
         db.Update_CurrentValue<double>("RainHourAccum",RainHourAccum, errmsg);
         db.Update_CurrentValue<double>("RainAccumDay",RainDayAccum, errmsg);
-        db.Update_CurrentValue<double>("Extra1_temperature",Extra1_temperature,errmsg);
+
         db.Update_CurrentValue<double>("Extra2_temperature",Extra2_temperature,errmsg);
         db.Update_CurrentValue<double>("ControlBoxTemperature",ControlBoxTemperature,errmsg);
         db.Update_CurrentValue<double>("ControlBoxPressure",ControlBoxPressure,errmsg);
@@ -1887,6 +1959,7 @@ void UpdateBlynkAfterSlowTimer()
 
         GreenhouseHourTempStats.AddData(Greenhouse_temperature);
         GreenhouseDayTempStats.AddData(Greenhouse_temperature);
+        Extra1DayTempStats.AddData(Extra1_temperature);
         WeatherDayTempStats.AddData(Weather_temperature);
         WeatherHourTempStats.AddData(Weather_temperature);
         AirFlowStats.AddData(AirFlowValue);
@@ -1906,6 +1979,11 @@ void UpdateBlynkAfterSlowTimer()
         db.Update_CurrentValue<double>("Greenhouse_temperature",   Greenhouse_temperature, errmsg);
         db.Update_CurrentValue<double>("Greenhouse temperature, min", GreenhouseTempMin, errmsg);
         db.Update_CurrentValue<double>("Greenhouse temperature, max", GreenhouseTempMax, errmsg);
+
+        db.Update_CurrentValue<double>("Extra1_temperature",   Extra1_temperature, errmsg);
+        db.Update_CurrentValue<double>("Extra1 temperature, min", Extra1TempMin, errmsg);
+        db.Update_CurrentValue<double>("Extra1 temperature, max", Extra1TempMax, errmsg);
+
 
         db.Update_CurrentValue<double>("Greenhouse_humidity",   Greenhouse_humidity, errmsg);
         db.Update_CurrentValue<double>("CPUTemperature",CPUTemperature, errmsg);
@@ -2554,6 +2632,12 @@ void ControlGreenhouseSlowTimer()
         GreenhouseTempMinDay = RoundToDecimal(GreenhouseDayTempStats.GetMin(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
         GreenhouseTempMaxDay = RoundToDecimal(GreenhouseDayTempStats.GetMax(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
 
+        Extra1TempAvgDay = RoundToDecimal(Extra1DayTempStats.GetMean(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
+        Extra1TempMinDay = RoundToDecimal(Extra1DayTempStats.GetMin(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
+        Extra1TempMaxDay = RoundToDecimal(Extra1DayTempStats.GetMax(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
+
+
+
         RainDayAccum = RoundToDecimal(RainDayStats.GetSum(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
         WeatherTempAvgDay = RoundToDecimal(WeatherDayTempStats.GetMean(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
         WeatherTempMinDay = RoundToDecimal(WeatherDayTempStats.GetMin(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
@@ -2566,6 +2650,10 @@ void ControlGreenhouseSlowTimer()
         db.Update_HistoryValue<double>(GreenhouseTempAvgDay_Text, GreenhouseTempAvgDay, errmsg);
         db.Update_HistoryValue<double>(GreenhouseTempMinDay_Text, GreenhouseTempMinDay, errmsg);
         db.Update_HistoryValue<double>(GreenhouseTempMaxDay_Text, GreenhouseTempMaxDay, errmsg);
+
+        db.Update_HistoryValue<double>(Extra1TempAvgDay_Text, Extra1TempAvgDay, errmsg);
+        db.Update_HistoryValue<double>(Extra1TempMinDay_Text, Extra1TempMinDay, errmsg);
+        db.Update_HistoryValue<double>(Extra1TempMaxDay_Text, Extra1TempMaxDay, errmsg);
 
         db.Update_HistoryValue<double>(WeatherTempAvgDay_Text, WeatherTempAvgDay, errmsg);
         db.Update_HistoryValue<double>(WeatherTempMinDay_Text, WeatherTempMinDay, errmsg);
@@ -3000,6 +3088,7 @@ bool CheckIOPortError(void)
 
 void WriteStatusInfo()
 {
+     spdlog::debug("WRITE STATUS: start WriteStatusInfo");
 
     //spdlog::info("GreenhouseTempAvgDay {:.1f}", TempAvgDay);
     //spdlog::info("WeatherAvgDay {:.1f}", WeatherTempAvgDay);
@@ -3015,6 +3104,7 @@ void WriteStatusInfo()
     spdlog::info("Temperature4Vent {} Setpoint_Udluftning {} ",Temperature4Vent, Setpoint_Udluftning);
 
     spdlog::info("Status_VandingStartTime1: {:%H:%M}, Status_VandingStartTime2: {:%H:%M}", fmt::localtime(Status_VandingStartTime1), fmt::localtime(Status_VandingStartTime2));
+    spdlog::debug("WRITE STATUS: slut WriteStatusInfo");
 
 }
 
@@ -3024,22 +3114,39 @@ void WriteStatusInfo()
 void FastTimerEvent()
 {
     nu = time(NULL);
+
+    //Tester forbindelse til database og genopretter hvis der e rproblemer
+    db.TestConnection();
+
     //spdlog::info("FastTimerEvent {:%H:%M:%S}", fmt::localtime(nu));
+    spdlog::debug("FAST: før ControlGreenhouseFastTimer");
     ControlGreenhouseFastTimer();
+    spdlog::debug("FAST: efter ControlGreenhouseFastTimer");
+    spdlog::debug("FAST: før UpdateBlynkAfterFastTimer");
     UpdateBlynkAfterFastTimer();  //Opdater data til Blynk}
+    spdlog::debug("FAST: efter UpdateBlynkAfterFastTimer");
     //LastFastTimerEvent = nu;
 }
 
 void SlowTimerEvent()
 {
+    spdlog::debug("SLOW: start SlowTimerEvent");
+
     nu = time(NULL);
     //spdlog::info("SlowTimerEvent {:%H:%M:%S}", fmt::localtime(nu));
     spdlog::info("SlowTimerEvent - Status på relæer! HeatOn: {}, Light/Ventilation: {}, WaterToTank: {}, WaterValve1: {}, WaterValve2: {}, WaterValve3: {}, WaterValve4: {}, WaterValve5: {}",
                  Status_HeatOn, Status_LightGreenhouse,Status_FreshWaterToTankValve, myWaterValves[0].statusOn, myWaterValves[1].statusOn, myWaterValves[2].statusOn, myWaterValves[3].statusOn, myWaterValves[4].statusOn);
+    spdlog::info("VinterTent {} Greenhouse_temperature {} Extra1_temperature {}", WinterTent, Greenhouse_temperature, Extra1_temperature);
 
     //CheckBlynk();
+    spdlog::debug("SLOW: før ControlGreenhouseSlowTimer");
     ControlGreenhouseSlowTimer();
+    spdlog::debug("SLOW: efter ControlGreenhouseSlowTimer");
+
+    spdlog::debug("SLOW: før UpdateBlynkAfterSlowTimer");
     UpdateBlynkAfterSlowTimer();
+    spdlog::debug("SLOW: efter UpdateBlynkAfterSlowTimer");
+
     //LastSlowTimerEvent = nu;
 
     if (AfterOrangeriSetup== 0)
@@ -3052,12 +3159,15 @@ void SlowTimerEvent()
         StopHeating = 0;
         AfterOrangeriSetup= 1;
     }
+    spdlog::debug("SLOW: slut SlowTimerEvent");
 
 }
 
 
 void VerySlowTimerEvent()
 {
+    spdlog::debug("VERYSLOW: start VerySlowTimerEvent");
+
     nu = time(NULL);
     spdlog::info("VerySlowTimerEvent {:%H:%M:%S}", fmt::localtime(nu));
     ControlGreenhouseVerySlowTimer();
@@ -3070,6 +3180,9 @@ void VerySlowTimerEvent()
     pulseCountFlow1 = pulseCountFlow1 + flow1;
     pulseCountFlow2 = pulseCountFlow2 + flow2;
     pulseCountFlow3 = pulseCountFlow3 + flow3;
+
+    spdlog::debug("VERYSLOW: slut VerySlowTimerEvent");
+
 }
 
 
@@ -3218,13 +3331,7 @@ void OrangeriSetup(void)
     LastRunTime =  0;  //Sikre at måling køres med dert samme
 
 
-    // Setup a function to be called every second
-//const int FastTimerInterval = 5; //Angiver antal sekunder mellem udførsel af FastTimer funktionen
-//const int SlowTimerInterval = 30; //Angiver antal sekunder mellem udførsel af SlowTimer funktionen
-//const int VerySlowTimerInterval = 600; //Angiver antal sekunder mellem udførsel af SlowTimer funktionen
-
-//const long FastTimerIntervalLong = 5000L; //Angiver antal sekunder mellem udførsel af FastTimer funktionen
-    char msg[30];
+   char msg[30];
     string str_msg = showDate(LastSetupRunTime);
     //cout << "Start Update...FastTimer 0.5" << endl;
     strcpy(msg, str_msg.c_str());
@@ -3334,19 +3441,6 @@ int main(int argc, char* argv[])
     OrangeriSetup();
     ReadSetpoints();
 
-    /*
-    // Define the intervals in milliseconds
-    const int intervalWriteStatusTimer = 540000; // 150 second
-    const int intervalVerySlowTimer = 150000; // 150 second
-    const int intervalSlowTimer = 30000; // 30  seconds
-    const int intervalFastTimer = 15000; // 2 seconds
-
-    // Initialize the last execution times
-    auto lastExecutionWriteStatusTimer = std::chrono::steady_clock::now();
-    auto lastExecutionVerySlowTimer = std::chrono::steady_clock::now();
-    auto lastExecutionSlowTimer = std::chrono::steady_clock::now();
-    auto lastExecutionFastTimer = std::chrono::steady_clock::now();
-    */
     // Timer intervals
     const auto intervalWriteStatusTimer = std::chrono::milliseconds(540000);
     const auto intervalVerySlowTimer   = std::chrono::milliseconds(150000);
@@ -3358,30 +3452,6 @@ int main(int argc, char* argv[])
     auto lastExecutionVerySlowTimer    = std::chrono::steady_clock::now();
     auto lastExecutionSlowTimer        = std::chrono::steady_clock::now();
     auto lastExecutionFastTimer        = std::chrono::steady_clock::now();
-
-    // Configure GPIOs
-    //int buttons[] = {GPIO_Button_WaterPump, GPIO_Button_StopVent, GPIO_Button_Disp};
-    /*
-        for(int pin : buttons)
-        {
-            set_mode(pi, pin, PI_INPUT);
-            set_pull_up_down(pi, pin, PI_PUD_UP);
-            // debounce
-            set_glitch_filter(pi, pin, 5000);
-            try
-            {
-                //callback(pi, buttons[i], EITHER_EDGE, buttonISR);
-                int cb_id = callback(pi, pin, FALLING_EDGE, buttonISR);
-                spdlog::info("Callback registered on GPIO pin {} is {}", pin, cb_id);
-            }
-            catch(...)
-            {
-                spdlog::error("Failed to register callback on GPIO {}", pin);
-            }
-        }
-
-
-        */
 
 
     io = ButtonDriver(pi);//reinitialiser
@@ -3407,25 +3477,37 @@ int main(int argc, char* argv[])
 
         if (now - lastExecutionVerySlowTimer >= intervalVerySlowTimer)
         {
-            VerySlowTimerEvent();
+            //VerySlowTimerEvent();
+            timedCall("VerySlowTimerEvent", [] {
+                VerySlowTimerEvent();
+            });
             lastExecutionVerySlowTimer = now;
         }
 
         if (now - lastExecutionSlowTimer >= intervalSlowTimer)
         {
-            SlowTimerEvent();
+            //SlowTimerEvent();
+            timedCall("SlowTimerEvent", [] {
+                SlowTimerEvent();
+            });
             lastExecutionSlowTimer = now;
         }
 
         if (now - lastExecutionFastTimer >= intervalFastTimer)
         {
-            FastTimerEvent();
+            //FastTimerEvent();
+            timedCall("FastTimerEvent", [] {
+                FastTimerEvent();
+            });
             lastExecutionFastTimer = now;
         }
 
         if (now - lastExecutionWriteStatusTimer >= intervalWriteStatusTimer)
         {
-            WriteStatusInfo();
+            //WriteStatusInfo();
+            timedCall("WriteStatusInfo", [] {
+                WriteStatusInfo();
+            });
             lastExecutionWriteStatusTimer = now;
         }
 

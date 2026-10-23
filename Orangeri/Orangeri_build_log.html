@@ -4,99 +4,96 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
 <body>
 <tt>
-Build started on: <u>15-10-2026 at 14:51.29</u><br />
-Build ended on: <u>15-10-2026 at 14:52.05</u><p />
+Build started on: <u>23-10-2026 at 15:56.52</u><br />
+Build ended on: <u>23-10-2026 at 15:57.38</u><p />
 <b>-------------- Build: Debug in Orangeri (compiler: GNU GCC Compiler)---------------</b><br />
 g++ -Wall -fexceptions -std=c++17 -g -pthread -I/home/orangeri/Documents/blynk-library-master/src -I/home/orangeri/Documents/blynk-library-master/linux -I/home/jesper/Documents/pugixml-1.9/src -I/home/jesper/Documents/Adafruit-sht31-for-PI-master -I/home/jesper/Documents/ABElectronics_CPP_Libraries/ExpanderPi -I/home/jesper/Documents/Adafruit_Python_DHT/source/Raspberry_Pi_2 -I/home/jesper/Documents/DS18B20-master -I/home/jesper/Documents/BME680_driver-master -I/usr/include -I/home/jesper/Crow/scripts -I/usr/include/boost/thread -I/home/jesper/Documents/Orangeri3/Orangeri/ -c /home/jesper/Documents/Orangeri3/Orangeri/main.cpp -o obj/Debug/Orangeri3/Orangeri/main.o<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:122:17: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
-  122 | char* XMLName = "/home/orangeri/Documents/Orangeri2/Orangeri/Orangeri.xml";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:187:17: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+  187 | char* XMLName = "/home/orangeri/Documents/Orangeri2/Orangeri/Orangeri.xml";<br />
       |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ExPi_IOPortWrite(int, int)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:619:21: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
-  619 |         if (PortNbr &gt;= 4 &amp; PortNbr &lt;= 11)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:696:21: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
+  696 |         if (PortNbr &gt;= 4 &amp; PortNbr &lt;= 11)<br />
       |             ~~~~~~~~^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ControlMotor(int)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:824:9: warning: unused variable 'pwm' [-Wunused-variable]</font><br />
-  824 |     int pwm;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:901:9: warning: unused variable 'pwm' [-Wunused-variable]</font><br />
+  901 |     int pwm;<br />
       |         ^~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:825:9: warning: unused variable 'dir' [-Wunused-variable]</font><br />
-  825 |     int dir;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:902:9: warning: unused variable 'dir' [-Wunused-variable]</font><br />
+  902 |     int dir;<br />
       |         ^~~<br />
-In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:974:<br />
+In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1064:<br />
 /home/jesper/Documents/Orangeri3/Orangeri/MyStat.h: In member function 'float MyStat::GetMean()':<br />
 <font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/MyStat.h:45:15: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
    45 |     if (count = 0)<br />
       |         ~~~~~~^~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: At global scope:<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:992:21: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
-  992 | char* emailAdress = "jesper@aaslyng.dk";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1083:21: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 1083 | char* emailAdress = "jesper@aaslyng.dk";<br />
       |                     ^~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:993:22: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
-  993 | char* emailSubject = "";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1084:22: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 1084 | char* emailSubject = "";<br />
       |                      ^~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void doWateringMenu(int)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1197:12: warning: unused variable 'nu' [-Wunused-variable]</font><br />
- 1197 |     time_t nu = time(NULL);<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1288:12: warning: unused variable 'nu' [-Wunused-variable]</font><br />
+ 1288 |     time_t nu = time(NULL);<br />
       |            ^~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ControlGreenhouseFastTimer()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1654:36: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
- 1654 |         if (Greenhouse_temperature &gt; AirPumpTemperature &amp; Status_LuftPumpe == 0)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1745:36: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
+ 1745 |         if (Greenhouse_temperature &gt; AirPumpTemperature &amp; Status_LuftPumpe == 0)<br />
       |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1661:36: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
- 1661 |         if (Greenhouse_temperature &lt; AirPumpTemperature &amp; Status_LuftPumpe == 1)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1752:36: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
+ 1752 |         if (Greenhouse_temperature &lt; AirPumpTemperature &amp; Status_LuftPumpe == 1)<br />
       |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1704:20: warning: suggest parentheses around comparison in operand of '&amp;' [-Wparentheses]</font><br />
- 1704 |     if (AutoWindow == 1 &amp; StopVentButtonActive == 0)  //Automatiske vinduer og ikke stop med knap<br />
-      |         ~~~~~~~~~~~^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ReadSetpointMenues()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2081:24: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
- 2081 |     if (VinduesKontrol =! 5)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2159:24: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
+ 2159 |     if (VinduesKontrol =! 5)<br />
       |         ~~~~~~~~~~~~~~~^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'time_t convertToTimeT(const string&amp;)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2221:12: warning: unused variable 'test' [-Wunused-variable]</font><br />
- 2221 |     time_t test = std::mktime(&amp;tm);<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2299:12: warning: unused variable 'test' [-Wunused-variable]</font><br />
+ 2299 |     time_t test = std::mktime(&amp;tm);<br />
       |            ^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void SaveDBValues()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2334:14: warning: unused variable 'myResult' [-Wunused-variable]</font><br />
- 2334 |         bool myResult;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2412:14: warning: unused variable 'myResult' [-Wunused-variable]</font><br />
+ 2412 |         bool myResult;<br />
       |              ^~~~~~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ControlGreenhouseSlowTimer()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2669:33: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
- 2669 |     if (Status_AutomaticControl = 1)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2757:33: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
+ 2757 |     if (Status_AutomaticControl = 1)<br />
       |         ~~~~~~~~~~~~~~~~~~~~~~~~^~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2911:18: warning: unused variable 'frac' [-Wunused-variable]</font><br />
- 2911 |     unsigned int frac;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2999:18: warning: unused variable 'frac' [-Wunused-variable]</font><br />
+ 2999 |     unsigned int frac;<br />
       |                  ^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'bool CheckIOPortError()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2964:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 2964 |         emailSubject = "Orangeri: IOPortSetupError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3052:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3052 |         emailSubject = "Orangeri: IOPortSetupError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2972:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 2972 |         emailSubject = "Orangeri: IOPortReadError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3060:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3060 |         emailSubject = "Orangeri: IOPortReadError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2980:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 2980 |         emailSubject = "Orangeri: IOPortWriteError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3068:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3068 |         emailSubject = "Orangeri: IOPortWriteError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2986:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 2986 |         emailSubject = "Orangeri: SetADCError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3074:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3074 |         emailSubject = "Orangeri: SetADCError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2993:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 2993 |         emailSubject = "Orangeri: ReadADCError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3081:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3081 |         emailSubject = "Orangeri: ReadADCError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2998:1: warning: no return statement in function returning non-void [-Wreturn-type]</font><br />
- 2998 | }<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3086:1: warning: no return statement in function returning non-void [-Wreturn-type]</font><br />
+ 3086 | }<br />
       | ^<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void OrangeriSetup()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3202:9: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
- 3202 |         ControlWindows;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3315:9: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
+ 3315 |         ControlWindows;<br />
       |         ^~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3202:9: warning: statement has no effect [-Wunused-value]</font><br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3315:9: warning: statement has no effect [-Wunused-value]</font><br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'int main(int, char**)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3465:21: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
- 3465 |                     ControlWindows;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3547:21: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
+ 3547 |                     ControlWindows;<br />
       |                     ^~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3465:21: warning: statement has no effect [-Wunused-value]</font><br />
-In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:974:<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3547:21: warning: statement has no effect [-Wunused-value]</font><br />
+In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1064:<br />
 /home/jesper/Documents/Orangeri3/Orangeri/MyStat.h: In member function 'float MyStat::GetMean()':<br />
 <font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/MyStat.h:57:2: warning: control reaches end of non-void function [-Wreturn-type]</font><br />
    57 |  };<br />
@@ -270,9 +267,9 @@ In file included from /usr/include/c++/10/memory:66,<br />
       |         ^~~~~~~~~~~~~<br />
 /usr/include/c++/10/bits/stl_uninitialized.h:84:9: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
 g++  -o bin/Debug/Orangeri obj/Debug/ABElectronics_CPP_Libraries/ExpanderPi/ABE_ExpanderPi.o obj/Debug/Adafruit-sht31-for-PI-master/sht31-d.o obj/Debug/Adafruit_Python_DHT/source/common_dht_read.o obj/Debug/DS18B20-master/DS18B20.o obj/Debug/pugixml-1.9/src/pugixml.o obj/Debug/Orangeri3/Orangeri/ButtonDriver.o obj/Debug/Orangeri3/Orangeri/Database.o obj/Debug/Orangeri3/Orangeri/main.o obj/Debug/Orangeri3/Orangeri/myXML.o  -pthread  /usr/local/lib/mariadb/libmariadb.so /usr/lib/arm-linux-gnueabihf/libspdlog.so /usr/lib/arm-linux-gnueabihf/libfmt.so /lib/libpigpiod_if2.so<br />
-Output file is bin/Debug/Orangeri with size 8.71 MB<br />
-<font color="#0000ff">Process terminated with status 0 (0 minute(s), 35 second(s))</font><br />
-<font color="#0000ff">0 error(s), 27 warning(s) (0 minute(s), 35 second(s))</font><br />
+Output file is bin/Debug/Orangeri with size 8.63 MB<br />
+<font color="#0000ff">Process terminated with status 0 (0 minute(s), 45 second(s))</font><br />
+<font color="#0000ff">0 error(s), 26 warning(s) (0 minute(s), 45 second(s))</font><br />
 </tt>
 </body>
 </html>
