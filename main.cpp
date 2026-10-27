@@ -1938,9 +1938,9 @@ void UpdateBlynkAfterSlowTimer()
         double WeatherTempMaxDay = WeatherDayTempStats.GetMax();
         double GreenhouseTempMin = GreenhouseDayTempStats.GetMin();
         double GreenhouseTempMax = GreenhouseDayTempStats.GetMax();
-        double Extra1TempMin = Extra1DayTempStats.GetMin();
-        double Extra1TempMax = Extra1DayTempStats.GetMax();
-        spdlog::info("Extra1Temp   Min {}  Max {}", Extra1TempMin, Extra1TempMax);
+        Extra1TempMinDay = Extra1DayTempStats.GetMin();
+        Extra1TempMaxDay = Extra1DayTempStats.GetMax();
+        spdlog::info("Extra1Temp   Min {}  Max {}", Extra1TempMinDay, Extra1TempMaxDay);
         db.Update_CurrentValue<double>("WeatherTemp",Weather_temperature, errmsg);
         db.Update_CurrentValue<double>("WeatherAvgTemp",WeatherTempAvgDay,errmsg);
         db.Update_CurrentValue<double>("WeatherMinTemp",WeatherTempMinDay, errmsg);
@@ -1960,6 +1960,7 @@ void UpdateBlynkAfterSlowTimer()
         GreenhouseHourTempStats.AddData(Greenhouse_temperature);
         GreenhouseDayTempStats.AddData(Greenhouse_temperature);
         Extra1DayTempStats.AddData(Extra1_temperature);
+        spdlog::info("Extra1_temperature gemmes i array {}", Extra1_temperature);
         WeatherDayTempStats.AddData(Weather_temperature);
         WeatherHourTempStats.AddData(Weather_temperature);
         AirFlowStats.AddData(AirFlowValue);
@@ -1981,8 +1982,8 @@ void UpdateBlynkAfterSlowTimer()
         db.Update_CurrentValue<double>("Greenhouse temperature, max", GreenhouseTempMax, errmsg);
 
         db.Update_CurrentValue<double>("Extra1_temperature",   Extra1_temperature, errmsg);
-        db.Update_CurrentValue<double>("Extra1 temperature, min", Extra1TempMin, errmsg);
-        db.Update_CurrentValue<double>("Extra1 temperature, max", Extra1TempMax, errmsg);
+        db.Update_CurrentValue<double>("Extra1 temperature, min", Extra1TempMinDay, errmsg);
+        db.Update_CurrentValue<double>("Extra1 temperature, max", Extra1TempMaxDay, errmsg);
 
 
         db.Update_CurrentValue<double>("Greenhouse_humidity",   Greenhouse_humidity, errmsg);
@@ -2635,8 +2636,6 @@ void ControlGreenhouseSlowTimer()
         Extra1TempAvgDay = RoundToDecimal(Extra1DayTempStats.GetMean(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
         Extra1TempMinDay = RoundToDecimal(Extra1DayTempStats.GetMin(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
         Extra1TempMaxDay = RoundToDecimal(Extra1DayTempStats.GetMax(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
-
-
 
         RainDayAccum = RoundToDecimal(RainDayStats.GetSum(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding
         WeatherTempAvgDay = RoundToDecimal(WeatherDayTempStats.GetMean(),1); //holder værdi for gennemsnit forrige dag. Benyttes som udgangspunkt for at vurderer behov for ekstra vanding

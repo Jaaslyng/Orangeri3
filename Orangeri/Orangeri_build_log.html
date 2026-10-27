@@ -4,9 +4,10 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
 <body>
 <tt>
-Build started on: <u>23-10-2026 at 15:56.52</u><br />
-Build ended on: <u>23-10-2026 at 15:57.38</u><p />
+Build started on: <u>27-10-2026 at 14:02.52</u><br />
+Build ended on: <u>27-10-2026 at 14:03.31</u><p />
 <b>-------------- Build: Debug in Orangeri (compiler: GNU GCC Compiler)---------------</b><br />
+g++ -Wall -fexceptions -std=c++17 -g -pthread -I/home/orangeri/Documents/blynk-library-master/src -I/home/orangeri/Documents/blynk-library-master/linux -I/home/jesper/Documents/pugixml-1.9/src -I/home/jesper/Documents/Adafruit-sht31-for-PI-master -I/home/jesper/Documents/ABElectronics_CPP_Libraries/ExpanderPi -I/home/jesper/Documents/Adafruit_Python_DHT/source/Raspberry_Pi_2 -I/home/jesper/Documents/DS18B20-master -I/home/jesper/Documents/BME680_driver-master -I/usr/include -I/home/jesper/Crow/scripts -I/usr/include/boost/thread -I/home/jesper/Documents/Orangeri3/Orangeri/ -c /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp -o obj/Debug/Orangeri3/Orangeri/Database.o<br />
 g++ -Wall -fexceptions -std=c++17 -g -pthread -I/home/orangeri/Documents/blynk-library-master/src -I/home/orangeri/Documents/blynk-library-master/linux -I/home/jesper/Documents/pugixml-1.9/src -I/home/jesper/Documents/Adafruit-sht31-for-PI-master -I/home/jesper/Documents/ABElectronics_CPP_Libraries/ExpanderPi -I/home/jesper/Documents/Adafruit_Python_DHT/source/Raspberry_Pi_2 -I/home/jesper/Documents/DS18B20-master -I/home/jesper/Documents/BME680_driver-master -I/usr/include -I/home/jesper/Crow/scripts -I/usr/include/boost/thread -I/home/jesper/Documents/Orangeri3/Orangeri/ -c /home/jesper/Documents/Orangeri3/Orangeri/main.cpp -o obj/Debug/Orangeri3/Orangeri/main.o<br />
 <font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:187:17: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
   187 | char* XMLName = "/home/orangeri/Documents/Orangeri2/Orangeri/Orangeri.xml";<br />
@@ -46,64 +47,58 @@ In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1064:<b
  1752 |         if (Greenhouse_temperature &lt; AirPumpTemperature &amp; Status_LuftPumpe == 1)<br />
       |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ReadSetpointMenues()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2159:24: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
- 2159 |     if (VinduesKontrol =! 5)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2160:24: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
+ 2160 |     if (VinduesKontrol =! 5)<br />
       |         ~~~~~~~~~~~~~~~^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'time_t convertToTimeT(const string&amp;)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2299:12: warning: unused variable 'test' [-Wunused-variable]</font><br />
- 2299 |     time_t test = std::mktime(&amp;tm);<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2300:12: warning: unused variable 'test' [-Wunused-variable]</font><br />
+ 2300 |     time_t test = std::mktime(&amp;tm);<br />
       |            ^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void SaveDBValues()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2412:14: warning: unused variable 'myResult' [-Wunused-variable]</font><br />
- 2412 |         bool myResult;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2413:14: warning: unused variable 'myResult' [-Wunused-variable]</font><br />
+ 2413 |         bool myResult;<br />
       |              ^~~~~~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void ControlGreenhouseSlowTimer()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2757:33: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
- 2757 |     if (Status_AutomaticControl = 1)<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2756:33: warning: suggest parentheses around assignment used as truth value [-Wparentheses]</font><br />
+ 2756 |     if (Status_AutomaticControl = 1)<br />
       |         ~~~~~~~~~~~~~~~~~~~~~~~~^~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2999:18: warning: unused variable 'frac' [-Wunused-variable]</font><br />
- 2999 |     unsigned int frac;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:2998:18: warning: unused variable 'frac' [-Wunused-variable]</font><br />
+ 2998 |     unsigned int frac;<br />
       |                  ^~~~<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'bool CheckIOPortError()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3052:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 3052 |         emailSubject = "Orangeri: IOPortSetupError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3051:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3051 |         emailSubject = "Orangeri: IOPortSetupError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3060:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 3060 |         emailSubject = "Orangeri: IOPortReadError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3059:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3059 |         emailSubject = "Orangeri: IOPortReadError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3068:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 3068 |         emailSubject = "Orangeri: IOPortWriteError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3067:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3067 |         emailSubject = "Orangeri: IOPortWriteError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3074:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 3074 |         emailSubject = "Orangeri: SetADCError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3073:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3073 |         emailSubject = "Orangeri: SetADCError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3081:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
- 3081 |         emailSubject = "Orangeri: ReadADCError ";<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3080:24: warning: ISO C++ forbids converting a string constant to 'char*' [-Wwrite-strings]</font><br />
+ 3080 |         emailSubject = "Orangeri: ReadADCError ";<br />
       |                        ^~~~~~~~~~~~~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3086:1: warning: no return statement in function returning non-void [-Wreturn-type]</font><br />
- 3086 | }<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3085:1: warning: no return statement in function returning non-void [-Wreturn-type]</font><br />
+ 3085 | }<br />
       | ^<br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'void OrangeriSetup()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3315:9: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
- 3315 |         ControlWindows;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3314:9: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
+ 3314 |         ControlWindows;<br />
       |         ^~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3315:9: warning: statement has no effect [-Wunused-value]</font><br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3314:9: warning: statement has no effect [-Wunused-value]</font><br />
 /home/jesper/Documents/Orangeri3/Orangeri/main.cpp: In function 'int main(int, char**)':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3547:21: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
- 3547 |                     ControlWindows;<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3546:21: warning: statement is a reference, not call, to function 'ControlWindows' [-Waddress]</font><br />
+ 3546 |                     ControlWindows;<br />
       |                     ^~~~~~~~~~~~~~<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3547:21: warning: statement has no effect [-Wunused-value]</font><br />
-In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1064:<br />
-/home/jesper/Documents/Orangeri3/Orangeri/MyStat.h: In member function 'float MyStat::GetMean()':<br />
-<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/MyStat.h:57:2: warning: control reaches end of non-void function [-Wreturn-type]</font><br />
-   57 |  };<br />
-      |  ^<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/main.cpp:3546:21: warning: statement has no effect [-Wunused-value]</font><br />
 In file included from /usr/include/c++/10/vector:72,<br />
                  from /usr/include/c++/10/functional:62,<br />
                  from /usr/include/spdlog/common.h:16,<br />
                  from /usr/include/spdlog/spdlog.h:12,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:7,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:11:<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:4:<br />
 /usr/include/c++/10/bits/vector.tcc: In member function 'std::vector&lt;_Tp, _Alloc&gt;&amp; std::vector&lt;_Tp, _Alloc&gt;::operator=(const std::vector&lt;_Tp, _Alloc&gt;&amp;) [with _Tp = spdlog::details::log_msg_buffer; _Alloc = std::allocator&lt;spdlog::details::log_msg_buffer&gt;]':<br />
 /usr/include/c++/10/bits/vector.tcc:226:44: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
   226 |        pointer __tmp = _M_allocate_and_copy(__xlen, __x.begin(),<br />
@@ -120,8 +115,184 @@ In file included from /usr/include/c++/10/vector:67,<br />
                  from /usr/include/c++/10/functional:62,<br />
                  from /usr/include/spdlog/common.h:16,<br />
                  from /usr/include/spdlog/spdlog.h:12,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:7,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:11:<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:4:<br />
+/usr/include/c++/10/bits/stl_vector.h: In member function 'std::vector&lt;_Tp, _Alloc&gt;::pointer std::vector&lt;_Tp, _Alloc&gt;::_M_allocate_and_copy(std::vector&lt;_Tp, _Alloc&gt;::size_type, _ForwardIterator, _ForwardIterator) [with _ForwardIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _Tp = spdlog::details::log_msg_buffer; _Alloc = std::allocator&lt;spdlog::details::log_msg_buffer&gt;]':<br />
+/usr/include/c++/10/bits/stl_vector.h:1508:2: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+ 1508 |  _M_allocate_and_copy(size_type __n,<br />
+      |  ^~~~~~~~~~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_vector.h:1508:2: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_vector.h:1514:35: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+ 1514 |        std::__uninitialized_copy_a(__first, __last, __result,<br />
+      |        ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+ 1515 |        _M_get_Tp_allocator());<br />
+      |        ~~~~~~~~~~~~~~~~~~~~~~      <br />
+In file included from /usr/include/c++/10/bits/char_traits.h:39,<br />
+                 from /usr/include/c++/10/string:40,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/stl_algobase.h: In function '_OI std::copy(_II, _II, _OI) [with _II = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _OI = __gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;]':<br />
+/usr/include/c++/10/bits/stl_algobase.h:560:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  560 |     copy(_II __first, _II __last, _OI __result)<br />
+      |     ^~~~<br />
+/usr/include/c++/10/bits/stl_algobase.h:560:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_algobase.h:560:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_algobase.h:569:7: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  568 |       return std::__copy_move_a&lt;__is_move_iterator&lt;_II&gt;::__value&gt;<br />
+      |              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+  569 |       (std::__miter_base(__first), std::__miter_base(__last), __result);<br />
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+In file included from /usr/include/c++/10/ext/alloc_traits.h:34,<br />
+                 from /usr/include/c++/10/bits/basic_string.h:40,<br />
+                 from /usr/include/c++/10/string:55,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/alloc_traits.h: In function 'void std::_Destroy(_ForwardIterator, _ForwardIterator, std::allocator&lt;_T2&gt;&amp;) [with _ForwardIterator = __gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _Tp = spdlog::details::log_msg_buffer]':<br />
+/usr/include/c++/10/bits/alloc_traits.h:735:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  735 |     _Destroy(_ForwardIterator __first, _ForwardIterator __last,<br />
+      |     ^~~~~~~~<br />
+/usr/include/c++/10/bits/alloc_traits.h:735:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/alloc_traits.h:738:15: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  738 |       _Destroy(__first, __last);<br />
+      |       ~~~~~~~~^~~~~~~~~~~~~~~~~<br />
+In file included from /usr/include/c++/10/memory:66,<br />
+                 from /usr/include/spdlog/common.h:12,<br />
+                 from /usr/include/spdlog/spdlog.h:12,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:4:<br />
+/usr/include/c++/10/bits/stl_uninitialized.h: In function '_ForwardIterator std::__uninitialized_copy_a(_InputIterator, _InputIterator, _ForwardIterator, std::allocator&lt;_Tp&gt;&amp;) [with _InputIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _ForwardIterator = spdlog::details::log_msg_buffer*; _Tp = spdlog::details::log_msg_buffer]':<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:323:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  323 |     __uninitialized_copy_a(_InputIterator __first, _InputIterator __last,<br />
+      |     ^~~~~~~~~~~~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:323:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:325:37: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  325 |     { return std::uninitialized_copy(__first, __last, __result); }<br />
+      |              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+In file included from /usr/include/c++/10/bits/stl_algobase.h:61,<br />
+                 from /usr/include/c++/10/bits/char_traits.h:39,<br />
+                 from /usr/include/c++/10/string:40,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/cpp_type_traits.h: In function '_Iterator std::__miter_base(_Iterator) [with _Iterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;]':<br />
+/usr/include/c++/10/bits/cpp_type_traits.h:544:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  544 |     __miter_base(_Iterator __it)<br />
+      |     ^~~~~~~~~~~~<br />
+In file included from /usr/include/c++/10/bits/char_traits.h:39,<br />
+                 from /usr/include/c++/10/string:40,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/stl_algobase.h: In function '_OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = false; _II = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _OI = __gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;]':<br />
+/usr/include/c++/10/bits/stl_algobase.h:511:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  511 |     __copy_move_a(_II __first, _II __last, _OI __result)<br />
+      |     ^~~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_algobase.h:511:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_algobase.h:511:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+In file included from /usr/include/c++/10/bits/alloc_traits.h:33,<br />
+                 from /usr/include/c++/10/ext/alloc_traits.h:34,<br />
+                 from /usr/include/c++/10/bits/basic_string.h:40,<br />
+                 from /usr/include/c++/10/string:55,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/stl_construct.h: In function 'void std::_Destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = __gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;]':<br />
+/usr/include/c++/10/bits/stl_construct.h:171:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  171 |     _Destroy(_ForwardIterator __first, _ForwardIterator __last)<br />
+      |     ^~~~~~~~<br />
+/usr/include/c++/10/bits/stl_construct.h:171:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_construct.h:185:11: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  184 |       std::_Destroy_aux&lt;__has_trivial_destructor(_Value_type)&gt;::<br />
+      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+  185 |  __destroy(__first, __last);<br />
+      |  ~~~~~~~~~^~~~~~~~~~~~~~~~~<br />
+In file included from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:1064:<br />
+/home/jesper/Documents/Orangeri3/Orangeri/MyStat.h: In member function 'float MyStat::GetMean()':<br />
+<font color="#0000ff">/home/jesper/Documents/Orangeri3/Orangeri/MyStat.h:57:2: warning: control reaches end of non-void function [-Wreturn-type]</font><br />
+   57 |  };<br />
+      |  ^<br />
+In file included from /usr/include/c++/10/memory:66,<br />
+                 from /usr/include/spdlog/common.h:12,<br />
+                 from /usr/include/spdlog/spdlog.h:12,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:4:<br />
+/usr/include/c++/10/bits/stl_uninitialized.h: In function '_ForwardIterator std::uninitialized_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _ForwardIterator = spdlog::details::log_msg_buffer*]':<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:125:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  125 |     uninitialized_copy(_InputIterator __first, _InputIterator __last,<br />
+      |     ^~~~~~~~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:125:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:150:15: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  147 |       return std::__uninitialized_copy&lt;__is_trivial(_ValueType1)<br />
+      |              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+  148 |            &amp;&amp; __is_trivial(_ValueType2)<br />
+      |            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+  149 |            &amp;&amp; __assignable&gt;::<br />
+      |            ~~~~~~~~~~~~~~~~~~<br />
+  150 |  __uninit_copy(__first, __last, __result);<br />
+      |  ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+In file included from /usr/include/c++/10/bits/stl_algobase.h:67,<br />
+                 from /usr/include/c++/10/bits/char_traits.h:39,<br />
+                 from /usr/include/c++/10/string:40,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/stl_iterator.h: In function '_Iterator std::__niter_base(__gnu_cxx::__normal_iterator&lt;_Iterator, _Container&gt;) [with _Iterator = const spdlog::details::log_msg_buffer*; _Container = std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt;]':<br />
+/usr/include/c++/10/bits/stl_iterator.h:1225:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+ 1225 |     __niter_base(__gnu_cxx::__normal_iterator&lt;_Iterator, _Container&gt; __it)<br />
+      |     ^~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_iterator.h: In function '_Iterator std::__niter_base(__gnu_cxx::__normal_iterator&lt;_Iterator, _Container&gt;) [with _Iterator = spdlog::details::log_msg_buffer*; _Container = std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt;]':<br />
+/usr/include/c++/10/bits/stl_iterator.h:1225:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+In file included from /usr/include/c++/10/bits/char_traits.h:39,<br />
+                 from /usr/include/c++/10/string:40,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/stl_algobase.h: In function '_From std::__niter_wrap(_From, _To) [with _From = __gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _To = spdlog::details::log_msg_buffer*]':<br />
+/usr/include/c++/10/bits/stl_algobase.h:323:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  323 |     __niter_wrap(_From __from, _To __res)<br />
+      |     ^~~~~~~~~~~~<br />
+In file included from /usr/include/c++/10/bits/alloc_traits.h:33,<br />
+                 from /usr/include/c++/10/ext/alloc_traits.h:34,<br />
+                 from /usr/include/c++/10/bits/basic_string.h:40,<br />
+                 from /usr/include/c++/10/string:55,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:6,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:1:<br />
+/usr/include/c++/10/bits/stl_construct.h: In static member function 'static void std::_Destroy_aux&lt;&lt;anonymous&gt; &gt;::__destroy(_ForwardIterator, _ForwardIterator) [with _ForwardIterator = __gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; bool &lt;anonymous&gt; = false]':<br />
+/usr/include/c++/10/bits/stl_construct.h:149:2: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  149 |  __destroy(_ForwardIterator __first, _ForwardIterator __last)<br />
+      |  ^~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_construct.h:149:2: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+In file included from /usr/include/c++/10/memory:66,<br />
+                 from /usr/include/spdlog/common.h:12,<br />
+                 from /usr/include/spdlog/spdlog.h:12,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.cpp:4:<br />
+/usr/include/c++/10/bits/stl_uninitialized.h: In static member function 'static _ForwardIterator std::__uninitialized_copy&lt;_TrivialValueTypes&gt;::__uninit_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _ForwardIterator = spdlog::details::log_msg_buffer*; bool _TrivialValueTypes = false]':<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:84:9: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+   84 |         __uninit_copy(_InputIterator __first, _InputIterator __last,<br />
+      |         ^~~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/stl_uninitialized.h:84:9: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+In file included from /usr/include/c++/10/vector:72,<br />
+                 from /usr/include/c++/10/functional:62,<br />
+                 from /usr/include/c++/10/pstl/glue_algorithm_defs.h:13,<br />
+                 from /usr/include/c++/10/algorithm:74,<br />
+                 from /usr/include/mariadb/conncpp/jdbccompat.hpp:25,<br />
+                 from /usr/include/mariadb/conncpp/Connection.hpp:28,<br />
+                 from /usr/include/mariadb/conncpp/Driver.hpp:26,<br />
+                 from /usr/include/mariadb/conncpp.hpp:24,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:14:<br />
+/usr/include/c++/10/bits/vector.tcc: In member function 'std::vector&lt;_Tp, _Alloc&gt;&amp; std::vector&lt;_Tp, _Alloc&gt;::operator=(const std::vector&lt;_Tp, _Alloc&gt;&amp;) [with _Tp = spdlog::details::log_msg_buffer; _Alloc = std::allocator&lt;spdlog::details::log_msg_buffer&gt;]':<br />
+/usr/include/c++/10/bits/vector.tcc:226:44: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  226 |        pointer __tmp = _M_allocate_and_copy(__xlen, __x.begin(),<br />
+      |                        ~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~<br />
+  227 |          __x.end());<br />
+      |          ~~~~~~~~~~                         <br />
+/usr/include/c++/10/bits/vector.tcc:238:21: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+  238 |        std::_Destroy(std::copy(__x.begin(), __x.end(), begin()),<br />
+      |        ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+  239 |        end(), _M_get_Tp_allocator());<br />
+      |        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br />
+/usr/include/c++/10/bits/vector.tcc:238:21: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
+In file included from /usr/include/c++/10/vector:67,<br />
+                 from /usr/include/c++/10/functional:62,<br />
+                 from /usr/include/c++/10/pstl/glue_algorithm_defs.h:13,<br />
+                 from /usr/include/c++/10/algorithm:74,<br />
+                 from /usr/include/mariadb/conncpp/jdbccompat.hpp:25,<br />
+                 from /usr/include/mariadb/conncpp/Connection.hpp:28,<br />
+                 from /usr/include/mariadb/conncpp/Driver.hpp:26,<br />
+                 from /usr/include/mariadb/conncpp.hpp:24,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:14:<br />
 /usr/include/c++/10/bits/stl_vector.h: In member function 'std::vector&lt;_Tp, _Alloc&gt;::pointer std::vector&lt;_Tp, _Alloc&gt;::_M_allocate_and_copy(std::vector&lt;_Tp, _Alloc&gt;::size_type, _ForwardIterator, _ForwardIterator) [with _ForwardIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _Tp = spdlog::details::log_msg_buffer; _Alloc = std::allocator&lt;spdlog::details::log_msg_buffer&gt;]':<br />
 /usr/include/c++/10/bits/stl_vector.h:1508:2: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
  1508 |  _M_allocate_and_copy(size_type __n,<br />
@@ -161,10 +332,10 @@ In file included from /usr/include/c++/10/ext/alloc_traits.h:34,<br />
   738 |       _Destroy(__first, __last);<br />
       |       ~~~~~~~~^~~~~~~~~~~~~~~~~<br />
 In file included from /usr/include/c++/10/memory:66,<br />
-                 from /usr/include/spdlog/common.h:12,<br />
-                 from /usr/include/spdlog/spdlog.h:12,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:7,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:11:<br />
+                 from /usr/include/mariadb/conncpp/SQLString.hpp:24,<br />
+                 from /usr/include/mariadb/conncpp/Driver.hpp:25,<br />
+                 from /usr/include/mariadb/conncpp.hpp:24,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:14:<br />
 /usr/include/c++/10/bits/stl_uninitialized.h: In function '_ForwardIterator std::__uninitialized_copy_a(_InputIterator, _InputIterator, _ForwardIterator, std::allocator&lt;_Tp&gt;&amp;) [with _InputIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _ForwardIterator = spdlog::details::log_msg_buffer*; _Tp = spdlog::details::log_msg_buffer]':<br />
 /usr/include/c++/10/bits/stl_uninitialized.h:323:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
   323 |     __uninitialized_copy_a(_InputIterator __first, _InputIterator __last,<br />
@@ -208,10 +379,10 @@ In file included from /usr/include/c++/10/bits/alloc_traits.h:33,<br />
   185 |  __destroy(__first, __last);<br />
       |  ~~~~~~~~~^~~~~~~~~~~~~~~~~<br />
 In file included from /usr/include/c++/10/memory:66,<br />
-                 from /usr/include/spdlog/common.h:12,<br />
-                 from /usr/include/spdlog/spdlog.h:12,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:7,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:11:<br />
+                 from /usr/include/mariadb/conncpp/SQLString.hpp:24,<br />
+                 from /usr/include/mariadb/conncpp/Driver.hpp:25,<br />
+                 from /usr/include/mariadb/conncpp.hpp:24,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:14:<br />
 /usr/include/c++/10/bits/stl_uninitialized.h: In function '_ForwardIterator std::uninitialized_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _ForwardIterator = spdlog::details::log_msg_buffer*]':<br />
 /usr/include/c++/10/bits/stl_uninitialized.h:125:5: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
   125 |     uninitialized_copy(_InputIterator __first, _InputIterator __last,<br />
@@ -257,19 +428,19 @@ In file included from /usr/include/c++/10/bits/alloc_traits.h:33,<br />
       |  ^~~~~~~~~<br />
 /usr/include/c++/10/bits/stl_construct.h:149:2: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
 In file included from /usr/include/c++/10/memory:66,<br />
-                 from /usr/include/spdlog/common.h:12,<br />
-                 from /usr/include/spdlog/spdlog.h:12,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/Database.h:7,<br />
-                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:11:<br />
+                 from /usr/include/mariadb/conncpp/SQLString.hpp:24,<br />
+                 from /usr/include/mariadb/conncpp/Driver.hpp:25,<br />
+                 from /usr/include/mariadb/conncpp.hpp:24,<br />
+                 from /home/jesper/Documents/Orangeri3/Orangeri/main.cpp:14:<br />
 /usr/include/c++/10/bits/stl_uninitialized.h: In static member function 'static _ForwardIterator std::__uninitialized_copy&lt;_TrivialValueTypes&gt;::__uninit_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = __gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;; _ForwardIterator = spdlog::details::log_msg_buffer*; bool _TrivialValueTypes = false]':<br />
 /usr/include/c++/10/bits/stl_uninitialized.h:84:9: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
    84 |         __uninit_copy(_InputIterator __first, _InputIterator __last,<br />
       |         ^~~~~~~~~~~~~<br />
 /usr/include/c++/10/bits/stl_uninitialized.h:84:9: note: parameter passing for argument of type '__gnu_cxx::__normal_iterator&lt;const spdlog::details::log_msg_buffer*, std::vector&lt;spdlog::details::log_msg_buffer, std::allocator&lt;spdlog::details::log_msg_buffer&gt; &gt; &gt;' changed in GCC 7.1<br />
 g++  -o bin/Debug/Orangeri obj/Debug/ABElectronics_CPP_Libraries/ExpanderPi/ABE_ExpanderPi.o obj/Debug/Adafruit-sht31-for-PI-master/sht31-d.o obj/Debug/Adafruit_Python_DHT/source/common_dht_read.o obj/Debug/DS18B20-master/DS18B20.o obj/Debug/pugixml-1.9/src/pugixml.o obj/Debug/Orangeri3/Orangeri/ButtonDriver.o obj/Debug/Orangeri3/Orangeri/Database.o obj/Debug/Orangeri3/Orangeri/main.o obj/Debug/Orangeri3/Orangeri/myXML.o  -pthread  /usr/local/lib/mariadb/libmariadb.so /usr/lib/arm-linux-gnueabihf/libspdlog.so /usr/lib/arm-linux-gnueabihf/libfmt.so /lib/libpigpiod_if2.so<br />
-Output file is bin/Debug/Orangeri with size 8.63 MB<br />
-<font color="#0000ff">Process terminated with status 0 (0 minute(s), 45 second(s))</font><br />
-<font color="#0000ff">0 error(s), 26 warning(s) (0 minute(s), 45 second(s))</font><br />
+Output file is bin/Debug/Orangeri with size 8.65 MB<br />
+<font color="#0000ff">Process terminated with status 0 (0 minute(s), 38 second(s))</font><br />
+<font color="#0000ff">0 error(s), 26 warning(s) (0 minute(s), 38 second(s))</font><br />
 </tt>
 </body>
 </html>

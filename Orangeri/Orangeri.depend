@@ -311,16 +311,16 @@
 	<bits/iscanonical.h>
 	<bits/mathinline.h>
 
-1792386690 source:/home/jesper/Documents/Orangeri3/Orangeri/Database.cpp
+1793035031 source:/home/jesper/Documents/Orangeri3/Orangeri/Database.cpp
 	"Database.h"
 	<iostream>
 	<ctime>
 	<spdlog/spdlog.h>
 
-1792386686 /home/jesper/Documents/Orangeri3/Orangeri/Database.h
+1793106170 /home/jesper/Documents/Orangeri3/Orangeri/Database.h
 	</home/jesper/mariadb-connector-c-3.2.3/include/mysql.h>
 	<string>
-	<spdlog/spdlog.h>
+	<type_traits>
 
 1625481786 /home/jesper/mariadb-connector-c-3.2.3/include/mysql.h
 	<stdarg.h>
@@ -655,7 +655,7 @@
 	<spdlog/common.h>
 	<spdlog/pattern_formatter.h>
 
-1792340895 source:/home/jesper/Documents/Orangeri3/Orangeri/main.cpp
+1792765767 source:/home/jesper/Documents/Orangeri3/Orangeri/main.cpp
 	<chrono>
 	"Database.h"
 	<string>
@@ -666,6 +666,7 @@
 	<spdlog/async.h>
 	<spdlog/async_logger.h>
 	<spdlog/sinks/stdout_color_sinks.h>
+	<spdlog/sinks/basic_file_sink.h>
 	<ButtonDriver.h>
 	<fmt/chrono.h>
 	<ctime>
@@ -675,6 +676,8 @@
 	<csignal>
 	<iostream>
 	<fstream>
+	<ctime>
+	<iomanip>
 	<stdio.h>
 	<stdlib.h>
 	<myXML.h>
